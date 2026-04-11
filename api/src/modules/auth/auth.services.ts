@@ -3,11 +3,10 @@ import { hashPassword, comparePassword } from '../../utils/hash';
 import { generateToken } from '../../utils/jwt';
 
 const MAX_ATTEMPTS = 5;
-const LOCK_TIME = 15 * 60 * 1000; // 15 minutos
+const LOCK_TIME = 15 * 60 * 1000; //15 min de bloqueio
 
 export class AuthService {
 
-  // 🔐 REGISTRO
   async register(email: string, password: string) {
 
     const password_hash = await hashPassword(password);
@@ -20,11 +19,10 @@ export class AuthService {
 
     if (error) {
       if (error.message.includes('duplicate')) {
-        throw new Error('Email já cadastrado');
+        throw new Error('Email já cadastrado.');
       }
-      throw new Error('Erro ao registrar usuário');
+      throw new Error('Erro ao registrar usuário!');
     }
-
     return data;
   }
 
@@ -38,10 +36,9 @@ export class AuthService {
       .single();
 
     if (!user || error) {
-      throw new Error('Credenciais inválidas');
+      throw new Error('Credenciais inválidas.');
     }
 
-    // 🚫 Verifica bloqueio
     if (user.locked_until && new Date(user.locked_until) > new Date()) {
       throw new Error('Conta bloqueada temporariamente. Tente novamente mais tarde.');
     }
@@ -50,7 +47,7 @@ export class AuthService {
 
     if (!isValid) {
       await this.handleFailedLogin(user);
-      throw new Error('Credenciais inválidas');
+      throw new Error('Credenciais inválidas.');
     }
     await supabase
       .from('pfc_users')
@@ -81,7 +78,7 @@ export class AuthService {
       await supabase
         .from('pfc_users')
         .update({
-          failed_attempts: attempts,
+          failed_attempts: 0, //reseta para 0
           locked_until: lockUntil.toISOString()
         })
         .eq('id', user.id);

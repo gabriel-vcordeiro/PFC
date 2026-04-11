@@ -11,7 +11,7 @@ export class AuthController {
       const parsed = RegisterSchema.safeParse(req.body);
 
       if (!parsed.success) {
-       return res.status(400).json({ error: 'Dados inválidos' });
+       return res.status(400).json({ error: 'Dados inválidos.' });
       }
       const { email, password } = parsed.data;
 
@@ -27,7 +27,7 @@ export class AuthController {
     try {
       const parsed = RegisterSchema.safeParse(req.body);
       if (!parsed.success) {
-       return res.status(400).json({ error: 'Dados inválidos' });
+       return res.status(400).json({ error: 'Dados inválidos.' });
       }
       const { email, password } = parsed.data;
       const result = await authService.login(email, password);

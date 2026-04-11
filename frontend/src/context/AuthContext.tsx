@@ -1,4 +1,5 @@
 import { createContext, useEffect, useState } from 'react';
+import { isTokenExpired } from '../utils/token';
 
 interface AuthContextType {
   token: string | null;
@@ -23,8 +24,13 @@ export function AuthProvider({ children }: any) {
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUserID = localStorage.getItem('userID');
-    setTokenState(storedToken);
-    setUserID(storedUserID);
+    if (storedToken && !isTokenExpired(storedToken)){
+      setTokenState(storedToken);
+      setUserID(storedUserID);
+    }
+    else{
+      logOut();
+    }
     setLoading(false);
   }, []);
 
