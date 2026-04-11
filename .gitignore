@@ -1,0 +1,5 @@
+/api/node_modules
+/.vscode
+api/.env
+/api/.vscode
+/node_modules
