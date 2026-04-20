@@ -14,8 +14,10 @@ export class AuthController {
        return res.status(400).json({ error: 'Dados inválidos.' });
       }
       const { email, password } = parsed.data;
+      const ipAddress = req.ip;
+      const userAgent = req.get('user-agent');
 
-      const user = await authService.register(email, password);
+      const user = await authService.register(email, password, ipAddress, userAgent);
 
       res.status(201).json(user);
     } catch (err: any) {
@@ -30,7 +32,9 @@ export class AuthController {
        return res.status(400).json({ error: 'Dados inválidos.' });
       }
       const { email, password } = parsed.data;
-      const result = await authService.login(email, password);
+      const ipAddress = req.ip;
+      const userAgent = req.get('user-agent');
+      const result = await authService.login(email, password, ipAddress, userAgent);
       res.json(result);
     } catch (err: any) {
       res.status(401).json({ error: err.message });
@@ -71,6 +75,59 @@ export class AuthController {
       }
       await authService.disable2FA(userId);
       res.json({ message: '2FA desabilitado.' });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  }
+
+  // 🔐 RECUPERAÇÃO DE SENHA
+  async requestPasswordReset(req: Request, res: Response) {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ error: 'Email necessário.' });
+      }
+
+      const ipAddress = req.ip;
+      const userAgent = req.get('user-agent');
+
+      const result = await authService.requestPasswordReset(email, ipAddress, userAgent);
+      res.json(result);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  }
+
+  async validateResetToken(req: Request, res: Response) {
+    try {
+      const { resetToken } = req.body;
+      if (!resetToken) {
+        return res.status(400).json({ error: 'Token necessário.' });
+      }
+
+      const user = await authService.validateResetToken(resetToken);
+      res.json({ valid: true, email: user.email });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  }
+
+  async resetPassword(req: Request, res: Response) {
+    try {
+      const { resetToken, newPassword } = req.body;
+      if (!resetToken || !newPassword) {
+        return res.status(400).json({ error: 'Token e nova senha necessários.' });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ error: 'Senha deve ter pelo menos 6 caracteres.' });
+      }
+
+      const ipAddress = req.ip;
+      const userAgent = req.get('user-agent');
+
+      const result = await authService.resetPassword(resetToken, newPassword, ipAddress, userAgent);
+      res.json(result);
     } catch (err: any) {
       res.status(400).json({ error: err.message });
     }

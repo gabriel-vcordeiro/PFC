@@ -18,6 +18,21 @@ export async function register(email: string, password: string) {
   return response.data;
 }
 
+export async function requestPasswordReset(email: string) {
+  const response = await api.post('/auth/request-password-reset', { email });
+  return response.data;
+}
+
+export async function validateResetToken(resetToken: string) {
+  const response = await api.post('/auth/validate-reset-token', { resetToken });
+  return response.data;
+}
+
+export async function resetPassword(resetToken: string, newPassword: string) {
+  const response = await api.post('/auth/reset-password', { resetToken, newPassword });
+  return response.data;
+}
+
 export async function verify2FA(userId: string, token: string) {
   const response = await api.post('/auth/verify-2fa', {
     userId,

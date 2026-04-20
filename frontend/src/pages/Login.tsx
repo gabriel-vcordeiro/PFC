@@ -76,7 +76,10 @@ export default function Login() {
           <button type="submit">Verificar</button>
         </form>
       )}
-      <button onClick={() => navigate('/register')}>Cadastro</button>
+      <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <button onClick={() => navigate('/register')}>Cadastro</button>
+        <button onClick={() => navigate('/reset-password')}>Esqueci minha senha</button>
+      </div>
     </div>
   );
 }
