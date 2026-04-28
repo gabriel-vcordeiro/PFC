@@ -3,3 +3,4 @@
 api/.env
 /api/.vscode
 /node_modules
+/api/dist
