@@ -6,7 +6,7 @@ services:
     region: ohio
     rootDir: api 
     # Comando de Build: Instala tudo e compila o TS para JS
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && npm run build
     # Comando de Start: Executa o arquivo compilado na pasta dist (ou build)
     startCommand: node dist/server.js 
     envVars:
