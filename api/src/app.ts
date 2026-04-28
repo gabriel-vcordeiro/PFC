@@ -5,7 +5,7 @@ import routes from './routes/index'
 const app = express();
 
 app.use(cors({
-  origin: 'https://pfc-frontend-one.vercel.app/',
+  origin: 'https://pfc-frontend-one.vercel.app',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
