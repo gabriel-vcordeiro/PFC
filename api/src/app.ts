@@ -4,7 +4,11 @@ import rateLimit from 'express-rate-limit';
 import routes from './routes/index'
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: 'https://pfc-frontend-one.vercel.app/',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
 app.use(express.json());
 app.use(routes);
 // proteção básica contra brute force
