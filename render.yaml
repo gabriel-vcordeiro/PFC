@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: meu-backend-express
+    env: node
+    plan: free
+    region: ohio
+    rootContext: api 
+    # Comando de Build: Instala tudo e compila o TS para JS
+    buildCommand: npm install && npm run build
+    # Comando de Start: Executa o arquivo compilado na pasta dist (ou build)
+    startCommand: node dist/server.js 
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
