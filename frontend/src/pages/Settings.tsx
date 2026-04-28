@@ -9,7 +9,7 @@ export default function Settings() {
 
   async function handleEnable2FA() {
     try {
-      const data = await enable2FA(userID);
+      const data = await enable2FA(userID!);
       setQrCode(data.qrCodeUrl);
       setSecret(data.secret);
       alert('2FA habilitado. Escaneie o QR code no seu app autenticador.');
@@ -20,7 +20,7 @@ export default function Settings() {
 
   async function handleDisable2FA() {
     try {
-      await disable2FA(userID);
+      await disable2FA(userID!);
       setQrCode('');
       setSecret('');
       alert('2FA desabilitado.');
