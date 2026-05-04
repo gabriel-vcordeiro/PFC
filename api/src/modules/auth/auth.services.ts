@@ -2,8 +2,8 @@ import { supabase } from '../../db/supabase/client';
 import { hashPassword, comparePassword } from '../../utils/hash';
 import { generateToken } from '../../utils/jwt';
 import { generateResetToken } from '../../utils/generate-reset-token';
-import { auditService, AuditAction } from '../../services/audit.service';
-import { emailService } from '../../services/email.service';
+import { auditService, AuditAction } from '../audit/audit.service';
+import { emailService } from '../email/email.service';
 import * as speakeasy from 'speakeasy';
 import * as qrcode from 'qrcode';
 

@@ -1,4 +1,4 @@
-import { supabase } from '../db/supabase/client';
+import { supabase } from '../../db/supabase/client';
 
 export enum AuditAction {
   PASSWORD_RESET_REQUESTED = 'password_reset_requested',

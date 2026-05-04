@@ -86,10 +86,6 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token, onS
       setSuccess('Email enviado. Verifique sua caixa de entrada.');
       setRequestedEmail(email);
       startResendTimer();
-      // Em produção, aqui você não mostraria o token
-      if (response.resetToken) {
-        console.log('Token para desenvolvimento:', response.resetToken);
-      }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erro ao solicitar recuperação');
     } finally {

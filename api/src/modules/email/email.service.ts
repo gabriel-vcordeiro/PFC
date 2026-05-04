@@ -1,17 +1,17 @@
 import nodemailer from 'nodemailer';
-import { env } from '../config/env';
+import { env } from '../../config/env';
 import sgMail from '@sendgrid/mail';
 sgMail.setApiKey(env.sendgridApiKey);
-
+export interface EmailInterface{
+  to: string,
+  from: string,
+  subject: string,
+  html: string
+}
 export class EmailService {
   async sendPasswordResetEmail(email: string, resetToken: string, expiresAt: Date) {
-    if (!env.smtpHost || !env.smtpUser || !env.smtpPass) {
-      throw new Error('SMTP não configurado. Verifique as variáveis de ambiente.');
-    }
-
     const resetLink = `${env.frontendUrl}/reset-password?token=${resetToken}`;
     const expiresAtFormatted = expiresAt.toLocaleString('pt-BR');
-
     const html = `
       <div style="font-family: Arial, sans-serif; color: #333;">
         <h2>Recuperação de senha</h2>
@@ -29,23 +29,10 @@ export class EmailService {
       subject: 'Recuperação de senha - PFC',
       html: html
     };
-    try {
-      await sgMail.send(msg);
-      console.log('E-mail enviado com sucesso via SendGrid!');
-    } catch (error: any) {
-      console.error('Erro no SendGrid:', error);
-      if (error.response) {
-        console.error(error.response.body);
-      }
-      throw new Error('Falha ao enviar e-mail de recuperação.');
-    }
+    this.sendEmailService(msg);
   }
 
   async sendPasswordChangedEmail(email: string) {
-    if (!env.smtpHost || !env.smtpUser || !env.smtpPass) {
-      return;
-    }
-
     const html = `
       <div style="font-family: Arial, sans-serif; color: #333;">
         <h2>Sua senha foi alterada</h2>
@@ -59,12 +46,16 @@ export class EmailService {
       subject: 'Senha alterada - PFC',
       html: html
     };
+    this.sendEmailService(msg);
+  }
+  async sendEmailService(email: EmailInterface){
     try {
-      await sgMail.send(msg);
+      await sgMail.send(email);
       console.log('E-mail enviado com sucesso via SendGrid!');
-    } catch (error: any) {
+    } 
+    catch (error: any) {
       console.error('Erro no SendGrid:', error);
-      if (error.response) {
+    if (error.response) {
         console.error(error.response.body);
       }
       throw new Error('Falha ao enviar e-mail de recuperação.');
