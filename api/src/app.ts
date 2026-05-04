@@ -2,10 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import routes from './routes/index'
+import { env } from './config/env';
 const app = express();
 
 app.use(cors({
-  origin: 'https://pfc-frontend-one.vercel.app',
+  origin: env.frontendUrl,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
