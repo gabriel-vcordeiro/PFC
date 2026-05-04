@@ -82,7 +82,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token, onS
     setSuccess('');
 
     try {
-      const response = await requestPasswordReset(email);
+      await requestPasswordReset(email);
       setSuccess('Email enviado. Verifique sua caixa de entrada.');
       setRequestedEmail(email);
       startResendTimer();
@@ -104,12 +104,9 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token, onS
     setSuccess('');
 
     try {
-      const response = await requestPasswordReset(requestedEmail);
+      await requestPasswordReset(requestedEmail);
       setSuccess('Email reenviado. Verifique sua caixa de entrada.');
       startResendTimer();
-      if (response.resetToken) {
-        console.log('Token para desenvolvimento:', response.resetToken);
-      }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erro ao reenviar recuperação');
     } finally {
