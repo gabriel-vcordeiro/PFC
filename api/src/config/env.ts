@@ -16,5 +16,6 @@ export const env = {
   smtpPass: process.env.SMTP_PASS || '',
   smtpSecure: process.env.SMTP_SECURE === 'true',
   emailFrom: process.env.EMAIL_FROM || 'noreply@seu-dominio.com',
-  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173'
+  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+  sendgridApiKey: process.env.SENDGRID_API_KEY || ''
 };

@@ -1,15 +1,7 @@
 import nodemailer from 'nodemailer';
 import { env } from '../config/env';
-
-const transporter = nodemailer.createTransport({
-  host: env.smtpHost,
-  port: env.smtpPort,
-  secure: env.smtpSecure,
-  auth: {
-    user: env.smtpUser,
-    pass: env.smtpPass
-  }
-});
+import sgMail from '@sendgrid/mail';
+sgMail.setApiKey(env.sendgridApiKey);
 
 export class EmailService {
   async sendPasswordResetEmail(email: string, resetToken: string, expiresAt: Date) {
@@ -31,13 +23,22 @@ export class EmailService {
         <p>Se você não solicitou a recuperação, ignore este email.</p>
       </div>
     `;
-
-    await transporter.sendMail({
-      from: env.emailFrom,
+    const msg = {
       to: email,
+      from: env.emailFrom || '',
       subject: 'Recuperação de senha - PFC',
-      html
-    });
+      html: html
+    };
+    try {
+      await sgMail.send(msg);
+      console.log('E-mail enviado com sucesso via SendGrid!');
+    } catch (error: any) {
+      console.error('Erro no SendGrid:', error);
+      if (error.response) {
+        console.error(error.response.body);
+      }
+      throw new Error('Falha ao enviar e-mail de recuperação.');
+    }
   }
 
   async sendPasswordChangedEmail(email: string) {
@@ -52,13 +53,22 @@ export class EmailService {
         <p>Se você não fez essa alteração, entre em contato imediatamente.</p>
       </div>
     `;
-
-    await transporter.sendMail({
-      from: env.emailFrom,
+    const msg = {
       to: email,
+      from: env.emailFrom || '',
       subject: 'Senha alterada - PFC',
-      html
-    });
+      html: html
+    };
+    try {
+      await sgMail.send(msg);
+      console.log('E-mail enviado com sucesso via SendGrid!');
+    } catch (error: any) {
+      console.error('Erro no SendGrid:', error);
+      if (error.response) {
+        console.error(error.response.body);
+      }
+      throw new Error('Falha ao enviar e-mail de recuperação.');
+    }
   }
 }
 

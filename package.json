@@ -10,5 +10,8 @@
   "workspaces": [
     "frontend",
     "api"
-  ]
+  ],
+  "dependencies": {
+    "@sendgrid/mail": "^8.1.6"
+  }
 }
