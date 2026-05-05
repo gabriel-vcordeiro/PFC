@@ -9,10 +9,11 @@ export async function login(email: string, password: string) {
   return response.data;
 }
 
-export async function register(email: string, password: string) {
+export async function register(email: string, password: string, username: string) {
   const response = await api.post('/auth/register', {
     email,
-    password
+    password,
+    username
   });
 
   return response.data;

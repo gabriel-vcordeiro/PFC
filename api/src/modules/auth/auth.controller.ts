@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthService } from "./auth.services";
-import { RegisterSchema } from './auth.dto';
+import { LoginSchema, RegisterSchema } from './auth.dto';
+import { User } from '../../models/user';
 
 const authService = new AuthService();
 
@@ -13,13 +14,20 @@ export class AuthController {
       if (!parsed.success) {
        return res.status(400).json({ error: 'Dados inválidos.' });
       }
-      const { email, password } = parsed.data;
+      const { email, password, username } = parsed.data;
       const ipAddress = req.ip;
       const userAgent = req.get('user-agent');
+      const user: User = {
+        id: '',
+        email,
+        password,
+        username,
+        is2FAEnabled: false,
+        twoFASecret: null
+      };
+      const userResponse = await authService.register(user, ipAddress, userAgent);
 
-      const user = await authService.register(email, password, ipAddress, userAgent);
-
-      res.status(201).json(user);
+      res.status(201).json(userResponse);
     } catch (err: any) {
       res.status(400).json({ error: err.message });
     }
@@ -27,7 +35,7 @@ export class AuthController {
 
   async login(req: Request, res: Response) {
     try {
-      const parsed = RegisterSchema.safeParse(req.body);
+      const parsed = LoginSchema.safeParse(req.body);
       if (!parsed.success) {
        return res.status(400).json({ error: 'Dados inválidos.' });
       }

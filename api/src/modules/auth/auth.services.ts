@@ -6,6 +6,7 @@ import { auditService, AuditAction } from '../audit/audit.service';
 import { emailService } from '../email/email.service';
 import * as speakeasy from 'speakeasy';
 import * as qrcode from 'qrcode';
+import { User } from '../../models/user';
 
 const MAX_ATTEMPTS = 5;
 const LOCK_TIME = 15 * 60 * 1000; //15 min de bloqueio
@@ -13,19 +14,19 @@ const RESET_TOKEN_EXPIRY = 1 * 60 * 60 * 1000; // 1 hora
 
 export class AuthService {
 
-  async register(email: string, password: string, ipAddress?: string, userAgent?: string) {
+  async register(user: User, ipAddress?: string, userAgent?: string) {
 
-    const password_hash = await hashPassword(password);
+    const password_hash = await hashPassword(user.password);
 
     const { data, error } = await supabase
       .from('pfc_users')
-      .insert([{ email, password:password_hash, is_2fa_enabled: false, secret_2fa: null }])
+      .insert([{ email: user.email, password:password_hash, is_2fa_enabled: user.is2FAEnabled, secret_2fa: user.twoFASecret, username: user.username }])
       .select()
       .single();
 
     if (error) {
       await auditService.logActivity(null, AuditAction.REGISTER_FAILED, {
-        email,
+        email: user.email,
         reason: error.message
       }, ipAddress, userAgent);
 
