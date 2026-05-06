@@ -1,6 +1,7 @@
 import { useState, useContext } from 'react';
 import { enable2FA, disable2FA } from '../api/auth.api';
 import { AuthContext } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export default function Settings() {
   const [qrCode, setQrCode] = useState('');
@@ -8,6 +9,7 @@ export default function Settings() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const { userID } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   async function handleEnable2FA() {
     setError('');
@@ -38,81 +40,64 @@ export default function Settings() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-      <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px' }}>
-        <h1>⚙️ Configurações de Segurança</h1>
+    <div className="min-h-screen bg-white px-4">
+      <div className="max-w-2xl mx-auto pt-16">
+        <div className="mb-8">
+          <h1 className="text-4xl font-semibold text-gray-900 mb-2">Configurações de Segurança</h1>
+          <p className="text-gray-600">Gerencie suas configurações de autenticação</p>
+        </div>
 
         {error && (
-          <div style={{
-            backgroundColor: '#fee',
-            color: '#c33',
-            padding: '10px',
-            borderRadius: '4px',
-            marginBottom: '15px'
-          }}>
-            {error}
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-800 text-sm">{error}</p>
           </div>
         )}
 
         {success && (
-          <div style={{
-            backgroundColor: '#efe',
-            color: '#3c3',
-            padding: '10px',
-            borderRadius: '4px',
-            marginBottom: '15px'
-          }}>
-            {success}
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-green-800 text-sm">{success}</p>
           </div>
         )}
 
-        <div style={{ marginBottom: '15px' }}>
+        <div className="space-y-3 mb-8">
           <button 
             onClick={handleEnable2FA}
-            style={{
-              width: '100%',
-              padding: '10px',
-              backgroundColor: '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              marginBottom: '10px'
-            }}
+            className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
           >
             Habilitar 2FA
           </button>
           <button 
             onClick={handleDisable2FA}
-            style={{
-              width: '100%',
-              padding: '10px',
-              backgroundColor: '#dc3545',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
+            className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
           >
             Desabilitar 2FA
           </button>
         </div>
 
         {qrCode && (
-          <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
-            <p style={{ margin: '0 0 10px 0' }}>
-              Escaneie este QR code no seu app autenticador (ex: Google Authenticator):
+          <div className="mb-8 p-6 bg-gray-50 border border-gray-200 rounded-lg">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Escaneie o código QR</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Escaneie este código no seu app autenticador (ex: Google Authenticator):
             </p>
             <img 
               src={qrCode} 
               alt="QR Code" 
-              style={{ display: 'block', margin: '0 auto', border: '1px solid #ddd', borderRadius: '4px' }}
+              className="w-48 mx-auto mb-4 border border-gray-300 rounded-lg"
             />
-            <p style={{ margin: '10px 0 0 0', fontSize: '12px', fontFamily: 'monospace' }}>
-              Ou copie o secret: {secret}
-            </p>
+            <div className="bg-white p-4 rounded-lg border border-gray-200">
+              <p className="text-xs text-gray-600 mb-1">Secret:</p>
+              <p className="text-sm font-mono text-gray-900 break-all">{secret}</p>
+            </div>
           </div>
         )}
+
+        <button 
+          onClick={() => navigate('/home')}
+          className="w-full px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+        >
+          Voltar
+        </button>
       </div>
     </div>
   );

@@ -20,7 +20,7 @@ export const ResetPasswordPage: React.FC = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+    <div className="min-h-screen bg-white">
       <ResetPasswordForm token={token || undefined} onSuccess={handleResetSuccess} />
     </div>
   );

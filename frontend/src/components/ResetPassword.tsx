@@ -50,7 +50,6 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token, onS
     return () => clearInterval(timer);
   }, [secondsLeft]);
 
-  // Manter o token sincronizado com a prop
   const validateTokenAutomatically = async () => {
     if (!token) return;
     
@@ -70,7 +69,6 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token, onS
     }
   };
 
-  // Step 1: Solicitar recuperação de senha
   const startResendTimer = () => {
     setSecondsLeft(60);
   };
@@ -114,7 +112,6 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token, onS
     }
   };
 
-  // Step 2: Validar token
   const handleValidateToken = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -132,7 +129,6 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token, onS
     }
   };
 
-  // Step 3: Resetar senha
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -156,7 +152,6 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token, onS
       setNewPassword('');
       setConfirmPassword('');
 
-      // Redirecionar para a página inicial após 2 segundos
       setTimeout(() => {
         onSuccess?.();
         window.location.href = '/';
@@ -169,196 +164,134 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token, onS
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px' }}>
-      <h1>🔐 Recuperar Senha</h1>
-
-      {error && (
-        <div style={{
-          backgroundColor: '#fee',
-          color: '#c33',
-          padding: '10px',
-          borderRadius: '4px',
-          marginBottom: '15px'
-        }}>
-          {error}
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="w-full max-w-md">
+        <div className="mb-8">
+          <h1 className="text-3xl font-semibold text-gray-900 text-center">Recuperar Senha</h1>
+          <p className="text-gray-600 text-center mt-2">Redefina sua senha de acesso</p>
         </div>
-      )}
 
-      {success && (
-        <div style={{
-          backgroundColor: '#efe',
-          color: '#3c3',
-          padding: '10px',
-          borderRadius: '4px',
-          marginBottom: '15px'
-        }}>
-          {success}
-        </div>
-      )}
-
-      {/* Passo 1: Solicitar reset */}
-      {step === 'request' && !tokenValid && !requestedEmail && (
-        <form onSubmit={token ? handleValidateToken : handleRequestReset}>
-          <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-              Email
-            </label>
-            <input
-              type="email"
-              value={email || resetToken || ''}
-              onChange={(e) => {
-                if (!resetToken) {
-                  setEmail(e.target.value);
-                }
-              }}
-              placeholder="seu@email.com"
-              required
-              disabled={!!resetToken}
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                boxSizing: 'border-box'
-              }}
-            />
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-800 text-sm">{error}</p>
           </div>
+        )}
 
-          {resetToken && (
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                Token (encontrado na URL)
+        {success && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-green-800 text-sm">{success}</p>
+          </div>
+        )}
+
+        {step === 'request' && !tokenValid && !requestedEmail && (
+          <form onSubmit={token ? handleValidateToken : handleRequestReset} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email
               </label>
               <input
-                type="text"
-                value={resetToken}
-                onChange={(e) => setResetToken(e.target.value)}
-                placeholder="Cole o token aqui"
-                required
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  boxSizing: 'border-box',
-                  fontFamily: 'monospace',
-                  fontSize: '12px'
+                type="email"
+                value={email || resetToken || ''}
+                onChange={(e) => {
+                  if (!resetToken) {
+                    setEmail(e.target.value);
+                  }
                 }}
+                placeholder="seu@email.com"
+                required
+                disabled={!!resetToken}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: '100%',
-              padding: '10px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.6 : 1
-            }}
-          >
-            {loading ? 'Processando...' : resetToken ? 'Validar Token' : 'Solicitar Recuperação'}
-          </button>
-        </form>
-      )}
+            {resetToken && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Token (encontrado na URL)
+                </label>
+                <input
+                  type="text"
+                  value={resetToken}
+                  onChange={(e) => setResetToken(e.target.value)}
+                  placeholder="Cole o token aqui"
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+                />
+              </div>
+            )}
 
-      {step === 'request' && !tokenValid && requestedEmail && !token && (
-        <div style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <p style={{ margin: 0 }}>
-            Email enviado para <strong>{requestedEmail}</strong>. Aguarde o link e reenvie se necessário.
-          </p>
-          <button
-            type="button"
-            onClick={handleResend}
-            disabled={secondsLeft > 0 || loading}
-            style={{
-              width: '100%',
-              padding: '10px',
-              backgroundColor: secondsLeft > 0 ? '#999' : '#17a2b8',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: secondsLeft > 0 || loading ? 'not-allowed' : 'pointer',
-              opacity: secondsLeft > 0 || loading ? 0.6 : 1
-            }}
-          >
-            {secondsLeft > 0 ? `Reenviar em ${secondsLeft}s` : 'Reenviar email'}
-          </button>
-        </div>
-      )}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+            >
+              {loading ? 'Processando...' : resetToken ? 'Validar Token' : 'Solicitar Recuperação'}
+            </button>
+          </form>
+        )}
 
-      {/* Passo 2: Resetar senha */}
-      {tokenValid && (
-        <form onSubmit={handleResetPassword}>
-          <div style={{ marginBottom: '10px', padding: '10px', backgroundColor: '#f0f0f0', borderRadius: '4px' }}>
-            <p style={{ margin: '0' }}>
-              <strong>Email:</strong> {userEmail}
+        {step === 'request' && !tokenValid && requestedEmail && !token && (
+          <div className="space-y-4">
+            <p className="text-gray-700 text-sm">
+              Email enviado para <span className="font-semibold">{requestedEmail}</span>. Verifique sua caixa de entrada.
             </p>
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={secondsLeft > 0 || loading}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+            >
+              {secondsLeft > 0 ? `Reenviar em ${secondsLeft}s` : 'Reenviar email'}
+            </button>
           </div>
+        )}
 
-          <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-              Nova Senha
-            </label>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Digite sua nova senha"
-              required
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                boxSizing: 'border-box'
-              }}
-            />
-          </div>
+        {tokenValid && (
+          <form onSubmit={handleResetPassword} className="space-y-4">
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-gray-700">
+                <span className="font-semibold">Email:</span> {userEmail}
+              </p>
+            </div>
 
-          <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-              Confirmar Senha
-            </label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirme sua nova senha"
-              required
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                boxSizing: 'border-box'
-              }}
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nova Senha
+              </label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Digite sua nova senha"
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: '100%',
-              padding: '10px',
-              backgroundColor: '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.6 : 1
-            }}
-          >
-            {loading ? 'Resetando Senha...' : 'Resetar Senha'}
-          </button>
-        </form>
-      )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Confirmar Senha
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirme sua nova senha"
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+            >
+              {loading ? 'Resetando Senha...' : 'Resetar Senha'}
+            </button>
+          </form>
+        )}
+      </div>
     </div>
   );
 };

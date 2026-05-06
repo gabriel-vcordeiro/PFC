@@ -54,26 +54,23 @@ export default function Login() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-      <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px' }}>
-        <h1>🔑 Login</h1>
+    <div className="min-h-screen bg-white flex items-center justify-center px-4">
+      <div className="w-full max-w-md">
+        <div className="mb-8">
+          <h1 className="text-3xl font-semibold text-gray-900 text-center">Login</h1>
+          <p className="text-gray-600 text-center mt-2">Acesse sua conta</p>
+        </div>
 
         {error && (
-          <div style={{
-            backgroundColor: '#fee',
-            color: '#c33',
-            padding: '10px',
-            borderRadius: '4px',
-            marginBottom: '15px'
-          }}>
-            {error}
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-full">
+            <p className="text-red-800 text-sm">{error}</p>
           </div>
         )}
 
         {!requires2FA ? (
-          <form onSubmit={handleLogin}>
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email
               </label>
               <input
@@ -81,20 +78,14 @@ export default function Login() {
                 placeholder="seu@email.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                required={true}
                 disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  boxSizing: 'border-box'
-                }}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
 
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Senha
               </label>
               <input
@@ -102,39 +93,24 @@ export default function Login() {
                 placeholder="Digite sua senha"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                required={true}
                 disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  boxSizing: 'border-box'
-                }}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
 
             <button 
               type="submit"
               disabled={loading}
-              style={{
-                width: '100%',
-                padding: '10px',
-                backgroundColor: loading ? '#999' : '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                marginBottom: '10px'
-              }}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
             >
               {loading ? 'Carregando...' : 'Entrar'}
             </button>
           </form>
         ) : (
-          <form onSubmit={handleVerify2FA}>
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+          <form onSubmit={handleVerify2FA} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Código 2FA
               </label>
               <input
@@ -142,79 +118,41 @@ export default function Login() {
                 placeholder="Digite o código"
                 value={twoFactorCode}
                 onChange={e => setTwoFactorCode(e.target.value)}
-                required={true}
                 disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  boxSizing: 'border-box'
-                }}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
 
             <button 
               type="submit"
               disabled={loading}
-              style={{
-                width: '100%',
-                padding: '10px',
-                backgroundColor: loading ? '#999' : '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                marginBottom: '10px'
-              }}
+              className="w-full px-4 py-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
             >
               {loading ? 'Carregando...' : 'Verificar'}
             </button>
           </form>
         )}
-        <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+
+        <div className="mt-6 space-y-2">
           <button 
             onClick={() => navigate('/register')}
             disabled={loading}
-            style={{
-              width: '100%',
-              padding: '10px',
-              backgroundColor: '#17a2b8',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: loading ? 'not-allowed' : 'pointer'
-            }}
+            className="w-full px-4 py-2 text-gray-700 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed font-medium"
           >
-            Cadastro
+            Criar Conta
           </button>
           <button 
             onClick={() => navigate('/reset-password')}
             disabled={loading}
-            style={{
-              width: '100%',
-              padding: '10px',
-              backgroundColor: '#ffc107',
-              color: 'black',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: loading ? 'not-allowed' : 'pointer'
-            }}
+            className="w-full px-4 py-2 text-gray-700 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed font-medium"
           >
-            Esqueci minha senha
+            Recuperar Senha
           </button>
           <button 
             onClick={() => navigate('/privacy-policy')}
             disabled={loading}
-            style={{
-              width: '100%',
-              padding: '10px',
-              backgroundColor: '#6c757d',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: loading ? 'not-allowed' : 'pointer'
-            }}
+            className="w-full px-4 py-2 text-gray-600 text-sm hover:text-gray-900 hover:cursor-pointer hover:underline transition-colors disabled:text-gray-400 disabled:cursor-not-allowed"
           >
             Política de Privacidade
           </button>
