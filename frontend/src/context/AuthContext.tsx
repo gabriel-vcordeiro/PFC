@@ -1,67 +1,42 @@
-import { createContext, useEffect, useState } from 'react';
-import { isTokenExpired } from '../utils/token';
-
-interface AuthContextType {
-  token: string | null;
-  setToken: (token: string | null) => void;
-  userID: string | null;
-  setUserID: (userID: string | null) => void;
-  logOut: () => void;
-}
-
-export const AuthContext = createContext<AuthContextType>({
-  token: null,
-  setToken: () => {},
-  userID: null,
-  setUserID: () => {},
-  logOut: () => {}
-});
-
+import { useState } from "react";
+import { isTokenExpired } from "../utils/token";
+import { AuthContext } from "./AuthContextType";
 export function AuthProvider({ children }: any) {
-  const [token, setTokenState] = useState<string | null>(null);
-  const [userID, setUserIDState] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedUserID = localStorage.getItem('userID');
-    if (storedToken && !isTokenExpired(storedToken)){
-      setTokenState(storedToken);
-      setUserID(storedUserID);
-    }
-    else{
-      logOut();
-    }
-    setLoading(false);
-  }, []);
+  const [token, setTokenState] = useState<string | null>(() => {
+    const storedToken = localStorage.getItem("token");
+    return storedToken && !isTokenExpired(storedToken) ? storedToken : null;
+  });
+
+  const [userID, setUserIDState] = useState<string | null>(() => {
+    const storedUserID = localStorage.getItem("userID");
+    return storedUserID ? storedUserID : null;
+  });
+
+  function logOut() {
+    setTokenState("");
+    setUserIDState("");
+  }
 
   function setToken(token: string | null) {
     if (token) {
-      localStorage.setItem('token', token);
+      localStorage.setItem("token", token);
     } else {
-      localStorage.removeItem('token');
+      localStorage.removeItem("token");
     }
-
     setTokenState(token);
   }
-  function setUserID(userID: string | null){
-    if (userID){
-      localStorage.setItem('userID', userID)
+  function setUserID(userID: string | null) {
+    if (userID) {
+      localStorage.setItem("userID", userID);
+    } else {
+      localStorage.removeItem("userID");
+      logOut();
     }
-    else{
-      localStorage.removeItem('userID');
-    }
-    setUserIDState(userID);
+    setUserIDState(userID)
   }
-
-  function logOut(){
-    setTokenState('');
-    setUserID('');
-  }
-
-  if (loading)
-    return (<div>Carregando...</div>)
   return (
-    <AuthContext.Provider value={{ token, setToken, userID, setUserID, logOut }}>
+    <AuthContext.Provider
+      value={{ token, setToken, userID, setUserID: setUserID, logOut }}>
       {children}
     </AuthContext.Provider>
   );

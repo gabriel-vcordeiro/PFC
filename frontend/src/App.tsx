@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Home from './pages/Home';
+import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import ResetPasswordPage from './pages/ResetPassword';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -16,6 +17,7 @@ function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/home" element={<LoginNeededRoute><Home /></LoginNeededRoute>} />
+        <Route path="/profile" element={<LoginNeededRoute><Profile /></LoginNeededRoute>} />
         <Route path="/settings" element={<LoginNeededRoute><Settings /></LoginNeededRoute>} />
       </Routes>
     </BrowserRouter>

@@ -1,6 +1,6 @@
 import { useState, useContext, } from 'react';
 import { login, verify2FA } from '../api/auth.api';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '../context/AuthContextType';
 import { useNavigate } from 'react-router-dom';
 
 export default function Login() {

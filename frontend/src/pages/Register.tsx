@@ -18,7 +18,7 @@ export default function Register() {
     try {
       await register(email, password, username);
       setSuccess('Cadastro realizado com sucesso!');
-      setTimeout(() => navigate('/'), 2000);
+      setTimeout(() => navigate('/'), 1000);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erro');
     }

@@ -13,22 +13,34 @@ const LOCK_TIME = 15 * 60 * 1000; //15 min de bloqueio
 const RESET_TOKEN_EXPIRY = 1 * 60 * 60 * 1000; // 1 hora
 
 export class AuthService {
-
   async register(user: User, ipAddress?: string, userAgent?: string) {
-
     const password_hash = await hashPassword(user.password);
-
+    user.email = user.email.toLowerCase();
     const { data, error } = await supabase
       .from('pfc_users')
-      .insert([{ email: user.email, password:password_hash, is_2fa_enabled: user.is2FAEnabled, secret_2fa: user.twoFASecret, username: user.username }])
+      .insert([
+        {
+          email: user.email,
+          password: password_hash,
+          is_2fa_enabled: user.is2FAEnabled,
+          secret_2fa: user.twoFASecret,
+          username: user.username,
+        },
+      ])
       .select()
       .single();
 
     if (error) {
-      await auditService.logActivity(null, AuditAction.REGISTER_FAILED, {
-        email: user.email,
-        reason: error.message
-      }, ipAddress, userAgent);
+      await auditService.logActivity(
+        null,
+        AuditAction.REGISTER_FAILED,
+        {
+          email: user.email,
+          reason: error.message,
+        },
+        ipAddress,
+        userAgent
+      );
 
       if (error.message.includes('duplicate')) {
         throw new Error('Email já cadastrado.');
@@ -36,16 +48,34 @@ export class AuthService {
       throw new Error('Erro ao registrar usuário!');
     }
 
-    await auditService.logActivity(data.id, AuditAction.REGISTER_SUCCESS, {
-      email: data.email
-    }, ipAddress, userAgent);
+    await auditService.logActivity(
+      data.id,
+      AuditAction.REGISTER_SUCCESS,
+      {
+        email: data.email,
+      },
+      ipAddress,
+      userAgent
+    );
 
     return data;
   }
 
-  // 🔐 LOGIN
+  async getUser(id: string) {
+    const { data: user, error } = await supabase.from('pfc_users').select().eq('id', id).single();
+    if (!user) {
+      throw new Error('Usuário não encontrado.');
+    }
+    return {
+      user: {
+        id: id,
+        username: user.username,
+        email: user.email,
+      },
+    };
+  }
   async login(email: string, password: string, ipAddress?: string, userAgent?: string) {
-
+    email = email.toLowerCase();
     const { data: user, error } = await supabase
       .from('pfc_users')
       .select('*')
@@ -53,18 +83,30 @@ export class AuthService {
       .single();
 
     if (!user || error) {
-      await auditService.logActivity(null, AuditAction.LOGIN_FAILED, {
-        email,
-        reason: 'Usuário não encontrado'
-      }, ipAddress, userAgent);
+      await auditService.logActivity(
+        null,
+        AuditAction.LOGIN_FAILED,
+        {
+          email,
+          reason: 'Usuário não encontrado',
+        },
+        ipAddress,
+        userAgent
+      );
       throw new Error('Credenciais inválidas.');
     }
 
     if (user.locked_until && new Date(user.locked_until) > new Date()) {
-      await auditService.logActivity(user.id, AuditAction.ACCOUNT_LOCKED, {
-        email: user.email,
-        lockedUntil: user.locked_until
-      }, ipAddress, userAgent);
+      await auditService.logActivity(
+        user.id,
+        AuditAction.ACCOUNT_LOCKED,
+        {
+          email: user.email,
+          lockedUntil: user.locked_until,
+        },
+        ipAddress,
+        userAgent
+      );
       throw new Error('Conta bloqueada temporariamente. Tente novamente mais tarde.');
     }
 
@@ -72,10 +114,16 @@ export class AuthService {
 
     if (!isValid) {
       await this.handleFailedLogin(user);
-      await auditService.logActivity(user.id, AuditAction.LOGIN_FAILED, {
-        email: user.email,
-        reason: 'Senha inválida'
-      }, ipAddress, userAgent);
+      await auditService.logActivity(
+        user.id,
+        AuditAction.LOGIN_FAILED,
+        {
+          email: user.email,
+          reason: 'Senha inválida',
+        },
+        ipAddress,
+        userAgent
+      );
       throw new Error('Credenciais inválidas.');
     }
 
@@ -83,22 +131,28 @@ export class AuthService {
       .from('pfc_users')
       .update({
         failed_attempts: 0,
-        locked_until: null
+        locked_until: null,
       })
       .eq('id', user.id);
 
-    await auditService.logActivity(user.id, AuditAction.LOGIN_SUCCESS, {
-      email: user.email,
-      requires2FA: !!user.is_2fa_enabled
-    }, ipAddress, userAgent);
+    await auditService.logActivity(
+      user.id,
+      AuditAction.LOGIN_SUCCESS,
+      {
+        email: user.email,
+        requires2FA: !!user.is_2fa_enabled,
+      },
+      ipAddress,
+      userAgent
+    );
 
     if (user.is_2fa_enabled) {
       return {
         requires_2fa: true,
         user: {
           id: user.id,
-          email: user.email
-        }
+          email: user.email,
+        },
       };
     }
 
@@ -108,8 +162,8 @@ export class AuthService {
       token,
       user: {
         id: user.id,
-        email: user.email
-      }
+        email: user.email,
+      },
     };
   }
 
@@ -128,7 +182,7 @@ export class AuthService {
       secret: user.secret_2fa,
       encoding: 'base32',
       token: token,
-      window: 2 // permite pequena diferença de tempo
+      window: 2, // permite pequena diferença de tempo
     });
 
     if (!verified) {
@@ -141,15 +195,15 @@ export class AuthService {
       token: jwtToken,
       user: {
         id: user.id,
-        email: user.email
-      }
+        email: user.email,
+      },
     };
   }
 
   async enable2FA(userId: string) {
     const secret = speakeasy.generateSecret({
       name: 'PFC App',
-      issuer: 'PFC'
+      issuer: 'PFC',
     });
 
     const qrCodeUrl = await qrcode.toDataURL(secret.otpauth_url!);
@@ -158,13 +212,13 @@ export class AuthService {
       .from('pfc_users')
       .update({
         secret_2fa: secret.base32,
-        is_2fa_enabled: true
+        is_2fa_enabled: true,
       })
       .eq('id', userId);
 
     return {
       secret: secret.base32,
-      qrCodeUrl
+      qrCodeUrl,
     };
   }
 
@@ -173,13 +227,13 @@ export class AuthService {
       .from('pfc_users')
       .update({
         secret_2fa: null,
-        is_2fa_enabled: false
+        is_2fa_enabled: false,
       })
       .eq('id', userId);
   }
 
-  // 🔐 RECUPERAÇÃO DE SENHA
   async requestPasswordReset(email: string, ipAddress?: string, userAgent?: string) {
+    email = email.toLowerCase();
     const { data: user, error } = await supabase
       .from('pfc_users')
       .select('id, email')
@@ -188,10 +242,16 @@ export class AuthService {
 
     if (!user || error) {
       // Não revelar se o email existe ou não (segurança)
-      await auditService.logActivity(null, AuditAction.PASSWORD_RESET_FAILED, {
-        email,
-        reason: 'Email não encontrado'
-      }, ipAddress, userAgent);
+      await auditService.logActivity(
+        null,
+        AuditAction.PASSWORD_RESET_FAILED,
+        {
+          email,
+          reason: 'Email não encontrado',
+        },
+        ipAddress,
+        userAgent
+      );
       throw new Error('Se o email existir, você receberá um link de recuperação.');
     }
 
@@ -202,7 +262,7 @@ export class AuthService {
       .from('pfc_users')
       .update({
         reset_token: resetToken,
-        reset_token_expires_at: expiresAt
+        reset_token_expires_at: expiresAt,
       })
       .eq('id', user.id);
 
@@ -210,10 +270,16 @@ export class AuthService {
       throw new Error('Erro ao solicitarrecuperação de senha.');
     }
 
-    await auditService.logActivity(user.id, AuditAction.PASSWORD_RESET_REQUESTED, {
-      email: user.email,
-      expiresAt
-    }, ipAddress, userAgent);
+    await auditService.logActivity(
+      user.id,
+      AuditAction.PASSWORD_RESET_REQUESTED,
+      {
+        email: user.email,
+        expiresAt,
+      },
+      ipAddress,
+      userAgent
+    );
 
     try {
       await emailService.sendPasswordResetEmail(user.email, resetToken, new Date(expiresAt));
@@ -225,7 +291,7 @@ export class AuthService {
       message: 'Email enviado. Verifique sua caixa de entrada.',
       // Apenas para desenvolvimento - remover em produção!
       resetToken: resetToken,
-      expiresAt
+      expiresAt,
     };
   }
 
@@ -242,18 +308,23 @@ export class AuthService {
 
     if (!user.reset_token_expires_at || new Date(user.reset_token_expires_at) < new Date()) {
       await auditService.logActivity(user.id, AuditAction.PASSWORD_RESET_TOKEN_EXPIRED, {
-        email: user.email
+        email: user.email,
       });
       throw new Error('Token de recuperação expirado. Solicite um novo.');
     }
 
     return {
       userId: user.id,
-      email: user.email
+      email: user.email,
     };
   }
 
-  async resetPassword(resetToken: string, newPassword: string, ipAddress?: string, userAgent?: string) {
+  async resetPassword(
+    resetToken: string,
+    newPassword: string,
+    ipAddress?: string,
+    userAgent?: string
+  ) {
     const { userId } = await this.validateResetToken(resetToken);
 
     const hashedPassword = await hashPassword(newPassword);
@@ -263,7 +334,7 @@ export class AuthService {
       .update({
         password: hashedPassword,
         reset_token: null,
-        reset_token_expires_at: null
+        reset_token_expires_at: null,
       })
       .eq('id', userId);
 
@@ -277,9 +348,15 @@ export class AuthService {
       .eq('id', userId)
       .single();
 
-    await auditService.logActivity(userId, AuditAction.PASSWORD_RESET_COMPLETED, {
-      email: user?.email
-    }, ipAddress, userAgent);
+    await auditService.logActivity(
+      userId,
+      AuditAction.PASSWORD_RESET_COMPLETED,
+      {
+        email: user?.email,
+      },
+      ipAddress,
+      userAgent
+    );
 
     try {
       if (user?.email) {
@@ -290,12 +367,11 @@ export class AuthService {
     }
 
     return {
-      message: 'Senha resetada com sucesso.'
+      message: 'Senha resetada com sucesso.',
     };
   }
 
   private async handleFailedLogin(user: any) {
-
     const attempts = (user.failed_attempts || 0) + 1;
 
     if (attempts >= MAX_ATTEMPTS) {
@@ -305,15 +381,14 @@ export class AuthService {
         .from('pfc_users')
         .update({
           failed_attempts: 0, //reseta para 0
-          locked_until: lockUntil.toISOString()
+          locked_until: lockUntil.toISOString(),
         })
         .eq('id', user.id);
-
     } else {
       await supabase
         .from('pfc_users')
         .update({
-          failed_attempts: attempts
+          failed_attempts: attempts,
         })
         .eq('id', user.id);
     }

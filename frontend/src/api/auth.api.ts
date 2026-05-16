@@ -3,17 +3,25 @@ import { api } from './axios';
 export async function login(email: string, password: string) {
   const response = await api.post('/auth/login', {
     email,
-    password
+    password,
   });
 
   return response.data;
 }
 
+export async function getUser(token: string) {
+  const response = await api.get('/auth/user', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+}
 export async function register(email: string, password: string, username: string) {
   const response = await api.post('/auth/register', {
     email,
     password,
-    username
+    username,
   });
 
   return response.data;
@@ -37,7 +45,7 @@ export async function resetPassword(resetToken: string, newPassword: string) {
 export async function verify2FA(userId: string, token: string) {
   const response = await api.post('/auth/verify-2fa', {
     userId,
-    token
+    token,
   });
 
   return response.data;
@@ -45,7 +53,7 @@ export async function verify2FA(userId: string, token: string) {
 
 export async function enable2FA(userId: string) {
   const response = await api.post('/auth/enable-2fa', {
-    userId
+    userId,
   });
 
   return response.data;
@@ -53,7 +61,7 @@ export async function enable2FA(userId: string) {
 
 export async function disable2FA(userId: string) {
   const response = await api.post('/auth/disable-2fa', {
-    userId
+    userId,
   });
 
   return response.data;
