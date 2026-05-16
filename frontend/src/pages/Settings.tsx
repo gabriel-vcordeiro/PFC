@@ -1,5 +1,5 @@
 import { useState, useContext } from 'react';
-import { enable2FA, disable2FA } from '../api/auth.api';
+import { enable2FA, disable2FA, deleteUserData } from '../api/auth.api';
 import { AuthContext } from '../context/AuthContextType';
 import { useNavigate } from 'react-router-dom';
 
@@ -8,7 +8,10 @@ export default function Settings() {
   const [secret, setSecret] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const { userID } = useContext(AuthContext);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { userID, token, logOut } = useContext(AuthContext);
   const navigate = useNavigate();
 
   async function handleEnable2FA() {
@@ -36,6 +39,28 @@ export default function Settings() {
       setSuccess('2FA desabilitado.');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erro');
+    }
+  }
+
+  async function handleDeleteUserData() {
+    if (deleteConfirmation !== 'DELETAR') {
+      setError('Confirme digitando "DELETAR"');
+      return;
+    }
+
+    setError('');
+    setSuccess('');
+    setIsDeleting(true);
+
+    try {
+      await deleteUserData(token!);
+      setSuccess('Dados deletados. Você será redirecionado...');
+      setTimeout(() => {
+        logOut();
+      }, 1000);
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Erro ao deletar dados');
+      setIsDeleting(false);
     }
   }
 
@@ -92,9 +117,65 @@ export default function Settings() {
           </div>
         )}
 
+        <div className="mt-12 pt-8 border-t border-gray-200">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-4">Privacidade e Dados</h2>
+          <p className="text-gray-600 mb-4">Gerencie seus dados pessoais</p>
+          
+          <button 
+            onClick={() => setShowDeleteModal(true)}
+            className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+          >
+            Deletar Todos os Meus Dados
+          </button>
+        </div>
+
+        {showDeleteModal && (
+          <div className="fixed inset-0 bg-black/75 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Deletar Todos os Dados</h3>
+              <p className="text-gray-600 mb-4">
+                Esta ação é <span className="font-semibold">irreversível</span>. Todos os seus dados pessoais serão permanentemente deletados.
+              </p>
+              <p className="text-gray-600 mb-6">
+                Digite "DELETAR" para confirmar:
+              </p>
+              
+              <input
+                type="text"
+                placeholder="Digite DELETAR"
+                value={deleteConfirmation}
+                onChange={(e) => setDeleteConfirmation(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg mb-4 font-mono"
+                disabled={isDeleting}
+              />
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setDeleteConfirmation('');
+                    setError('');
+                  }}
+                  className="flex-1 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:opacity-50"
+                  disabled={isDeleting}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDeleteUserData}
+                  disabled={isDeleting || deleteConfirmation !== 'DELETAR'}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {isDeleting ? 'Deletando...' : 'Deletar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <button 
           onClick={() => navigate('/home')}
-          className="w-full px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+          className="w-full px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium mt-4"
         >
           Voltar
         </button>

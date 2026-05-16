@@ -13,7 +13,9 @@ export enum AuditAction {
   MFA_ENABLED = 'mfa_enabled',
   MFA_DISABLED = 'mfa_disabled',
   MFA_VERIFIED = 'mfa_verified',
-  MFA_FAILED = 'mfa_failed'
+  MFA_FAILED = 'mfa_failed',
+  USER_DATA_DELETED = 'user_data_deleted',
+  USER_DATA_DELETION_FAILED = 'user_data_deletion_failed'
 }
 
 export class AuditService {

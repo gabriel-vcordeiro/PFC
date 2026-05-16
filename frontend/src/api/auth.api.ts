@@ -66,3 +66,13 @@ export async function disable2FA(userId: string) {
 
   return response.data;
 }
+
+export async function deleteUserData(token: string) {
+  const response = await api.post('/auth/delete-user-data', {}, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+}

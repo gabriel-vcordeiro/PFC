@@ -11,11 +11,10 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
-app.use(routes);
-// proteção básica contra brute force
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100
 }));
+app.use(routes);
 
 export default app;

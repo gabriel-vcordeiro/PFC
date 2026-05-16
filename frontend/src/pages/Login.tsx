@@ -18,7 +18,6 @@ export default function Login() {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
       const data = await login(email, password);
       if (data.requires_2fa) {

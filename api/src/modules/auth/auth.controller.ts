@@ -173,4 +173,40 @@ async getUser(req: Request, res: Response) {
     });
   }
 }
+
+async deleteUserData(req: Request, res: Response) {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({
+        error: 'Token necessário.',
+      });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const validatedToken = verifyToken(token!) as DecodedAuthToken;
+
+    if (!validatedToken?.userId) {
+      return res.status(401).json({
+        error: 'Token inválido.',
+      });
+    }
+
+    const ipAddress = req.ip;
+    const userAgent = req.get('user-agent');
+
+    const result = await authService.deleteUserData(
+      validatedToken.userId,
+      ipAddress,
+      userAgent
+    );
+
+    return res.json(result);
+  } catch (err: any) {
+    return res.status(400).json({
+      error: err.message,
+    });
+  }
+}
 }

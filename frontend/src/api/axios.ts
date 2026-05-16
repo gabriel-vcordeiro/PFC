@@ -16,11 +16,16 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// 👇 captura expiração
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    const isLoginRoute =
+      err.config?.url?.includes('/auth/login');
+
+    if (
+      err.response?.status === 401 &&
+      !isLoginRoute
+    ) {
       localStorage.removeItem('token');
       window.location.href = '/';
     }

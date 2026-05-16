@@ -36,7 +36,6 @@ export default function Profile() {
     loadProfile();
   }, [token]);
 
-
   return (
     <div className="min-h-screen bg-white text-gray-900">
       <div className="bg-gray-50 border-b border-gray-200">
@@ -164,7 +163,6 @@ export default function Profile() {
             </section>
 
             <aside className="space-y-6">
-
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-6 shadow-sm">
                 <h3 className="mt-3 text-xl font-semibold text-gray-900">
                   Ajuste suas configurações de segurança
