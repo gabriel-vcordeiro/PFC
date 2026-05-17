@@ -6,6 +6,7 @@ export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [consentimentoAceito, setConsentimentoAceito] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
@@ -15,12 +16,24 @@ export default function Register() {
     setError('');
     setSuccess('');
 
+    if (!consentimentoAceito) {
+      setError('Você deve aceitar a Política de Consentimento para se cadastrar.');
+      return;
+    }
+
     try {
-      await register(email, password, username);
+      await register(
+        email,
+        password,
+        username,
+        consentimentoAceito,
+        'analytics_and_profile',
+        '1.0.0'
+      );
       setSuccess('Cadastro realizado com sucesso!');
       setTimeout(() => navigate('/'), 1000);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Erro');
+      setError(err.response?.data?.error || 'Erro ao registrar');
     }
   }
 
@@ -89,7 +102,27 @@ export default function Register() {
             />
           </div>
 
-          <button 
+          <div className="flex items-start space-x-3 p-4 bg-gray-50 border border-gray-300 rounded-lg">
+            <input
+              type="checkbox"
+              id="consentimento"
+              checked={consentimentoAceito}
+              onChange={e => setConsentimentoAceito(e.target.checked)}
+              className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500 mt-1 cursor-pointer"
+            />
+            <label htmlFor="consentimento" className="text-sm text-gray-700 cursor-pointer">
+              Aceito a{' '}
+              <button
+                type="button"
+                onClick={() => navigate('/consent-policy')}
+                className="text-green-600 hover:text-green-700 underline font-medium"
+              >
+                Política de Consentimento
+              </button>
+            </label>
+          </div>
+
+          <button
             type="submit"
             className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
           >
@@ -97,7 +130,7 @@ export default function Register() {
           </button>
         </form>
 
-        <button 
+        <button
           onClick={() => navigate('/')}
           className="w-full mt-4 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
         >

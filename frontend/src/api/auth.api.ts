@@ -17,11 +17,21 @@ export async function getUser(token: string) {
   });
   return response.data;
 }
-export async function register(email: string, password: string, username: string) {
+export async function register(
+  email: string,
+  password: string,
+  username: string,
+  consentimento_aceito: boolean,
+  consentimento_finalidade: string,
+  consentimento_versao: string
+) {
   const response = await api.post('/auth/register', {
     email,
     password,
     username,
+    consentimento_aceito,
+    consentimento_finalidade,
+    consentimento_versao,
   });
 
   return response.data;

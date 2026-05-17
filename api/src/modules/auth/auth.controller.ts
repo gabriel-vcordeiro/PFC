@@ -19,7 +19,7 @@ export class AuthController {
       if (!parsed.success) {
         return res.status(400).json({ error: 'Dados inválidos.' });
       }
-      const { email, password, username } = parsed.data;
+      const { email, password, username, consentimento_aceito, consentimento_finalidade, consentimento_versao } = parsed.data;
       const ipAddress = req.ip;
       const userAgent = req.get('user-agent');
       const user: User = {
@@ -30,7 +30,16 @@ export class AuthController {
         is2FAEnabled: false,
         twoFASecret: null,
       };
-      const userResponse = await authService.register(user, ipAddress, userAgent);
+      const userResponse = await authService.register(
+        user,
+        {
+          consentimento_aceito,
+          consentimento_finalidade,
+          consentimento_versao,
+        },
+        ipAddress,
+        userAgent
+      );
 
       res.status(201).json(userResponse);
     } catch (err: any) {
