@@ -1,5 +1,5 @@
 import { useState, useContext } from 'react';
-import { enable2FA, disable2FA, deleteUserData } from '../api/auth.api';
+import { enable2FA, disable2FA, deleteUserData, exportUserData } from '../api/auth.api';
 import { AuthContext } from '../context/AuthContextType';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,6 +11,7 @@ export default function Settings() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const { userID, token, logOut } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -61,6 +62,32 @@ export default function Settings() {
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erro ao deletar dados');
       setIsDeleting(false);
+    }
+  }
+
+  async function handleExportUserData() {
+    setError('');
+    setSuccess('');
+    setIsExporting(true);
+
+    try {
+      const data = await exportUserData(token!);
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: 'application/json;charset=utf-8',
+      });
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `meus-dados-${data.user.id}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      setSuccess('Seus dados pessoais foram exportados com sucesso.');
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Erro ao exportar dados pessoais');
+    } finally {
+      setIsExporting(false);
     }
   }
 
@@ -121,6 +148,14 @@ export default function Settings() {
           <h2 className="text-2xl font-semibold text-gray-900 mb-4">Privacidade e Dados</h2>
           <p className="text-gray-600 mb-4">Gerencie seus dados pessoais</p>
           
+          <button 
+            onClick={handleExportUserData}
+            disabled={isExporting}
+            className="w-full px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium mb-3 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          >
+            {isExporting ? 'Exportando...' : 'Exportar Meus Dados'}
+          </button>
+
           <button 
             onClick={() => setShowDeleteModal(true)}
             className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"

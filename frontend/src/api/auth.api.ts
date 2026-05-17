@@ -1,20 +1,12 @@
 import { api } from './axios';
 
+//Caminhos auth
 export async function login(email: string, password: string) {
   const response = await api.post('/auth/login', {
     email,
     password,
   });
 
-  return response.data;
-}
-
-export async function getUser(token: string) {
-  const response = await api.get('/auth/user', {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
   return response.data;
 }
 export async function register(email: string, password: string, username: string) {
@@ -67,12 +59,36 @@ export async function disable2FA(userId: string) {
   return response.data;
 }
 
-export async function deleteUserData(token: string) {
-  const response = await api.post('/auth/delete-user-data', {}, {
+//Caminhos user
+export async function getUser(token: string) {
+  const response = await api.get('/user/user', {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
+  return response.data;
+}
+
+export async function exportUserData(token: string) {
+  const response = await api.get('/user/export-user-data', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+}
+
+export async function deleteUserData(token: string) {
+  const response = await api.post(
+    '/user/delete-user-data',
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
   return response.data;
 }

@@ -1,15 +1,9 @@
 import { Request, Response } from 'express';
-import { AuthService } from './auth.services';
+import { AuthService } from './auth.service';
 import { LoginSchema, RegisterSchema } from './auth.dto';
 import { User } from '../../models/user';
-import { verifyToken } from '../../utils/jwt';
-import { getQueryString } from '../../utils/requestHelper';
 
 const authService = new AuthService();
-
-type DecodedAuthToken = {
-  userId?: string;
-};
 
 export class AuthController {
   async register(req: Request, res: Response) {
@@ -92,8 +86,6 @@ export class AuthController {
       res.status(400).json({ error: err.message });
     }
   }
-
-  // 🔐 RECUPERAÇÃO DE SENHA
   async requestPasswordReset(req: Request, res: Response) {
     try {
       const { email } = req.body;
@@ -110,7 +102,6 @@ export class AuthController {
       res.status(400).json({ error: err.message });
     }
   }
-
   async validateResetToken(req: Request, res: Response) {
     try {
       const { resetToken } = req.body;
@@ -124,7 +115,6 @@ export class AuthController {
       res.status(400).json({ error: err.message });
     }
   }
-
   async resetPassword(req: Request, res: Response) {
     try {
       const { resetToken, newPassword } = req.body;
@@ -145,68 +135,5 @@ export class AuthController {
       res.status(400).json({ error: err.message });
     }
   }
-async getUser(req: Request, res: Response) {
-  try {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({
-        error: 'Token necessário.',
-      });
-    }
-
-    const token = authHeader.split(' ')[1];
-    const validatedToken = verifyToken(token!) as DecodedAuthToken;
-
-    if (!validatedToken?.userId) {
-      return res.status(401).json({
-        error: 'Token inválido.',
-      });
-    }
-
-    const user = await authService.getUser(validatedToken.userId);
-
-    return res.json(user);
-  } catch (err: any) {
-    return res.status(401).json({
-      error: err.message,
-    });
-  }
 }
 
-async deleteUserData(req: Request, res: Response) {
-  try {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({
-        error: 'Token necessário.',
-      });
-    }
-
-    const token = authHeader.split(' ')[1];
-    const validatedToken = verifyToken(token!) as DecodedAuthToken;
-
-    if (!validatedToken?.userId) {
-      return res.status(401).json({
-        error: 'Token inválido.',
-      });
-    }
-
-    const ipAddress = req.ip;
-    const userAgent = req.get('user-agent');
-
-    const result = await authService.deleteUserData(
-      validatedToken.userId,
-      ipAddress,
-      userAgent
-    );
-
-    return res.json(result);
-  } catch (err: any) {
-    return res.status(400).json({
-      error: err.message,
-    });
-  }
-}
-}
