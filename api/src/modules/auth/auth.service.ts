@@ -4,6 +4,7 @@ import { generateToken } from '../../utils/jwt';
 import { generateResetToken } from '../../utils/generate-reset-token';
 import { auditService, AuditAction } from '../audit/audit.service';
 import { emailService } from '../email/email.service';
+import { consentService } from '../consent/consent.service';
 import * as speakeasy from 'speakeasy';
 import * as qrcode from 'qrcode';
 import { User } from '../../models/user';
@@ -13,7 +14,16 @@ const LOCK_TIME = 15 * 60 * 1000; //15 min de bloqueio
 const RESET_TOKEN_EXPIRY = 1 * 60 * 60 * 1000; // 1 hora
 
 export class AuthService {
-  async register(user: User, ipAddress?: string, userAgent?: string) {
+  async register(
+    user: User,
+    consentData?: {
+      consentimento_aceito: boolean;
+      consentimento_finalidade: string;
+      consentimento_versao: string;
+    },
+    ipAddress?: string,
+    userAgent?: string
+  ) {
     const password_hash = await hashPassword(user.password);
     user.email = user.email.toLowerCase();
     const { data, error } = await supabase
@@ -46,6 +56,20 @@ export class AuthService {
         throw new Error('Email já cadastrado.');
       }
       throw new Error('Erro ao registrar usuário!');
+    }
+
+    if (consentData) {
+      try {
+        await consentService.recordConsent(
+          data.id,
+          consentData.consentimento_aceito,
+          consentData.consentimento_finalidade,
+          consentData.consentimento_versao
+        );
+      } catch (consentError: any) {
+        await supabase.from('pfc_users').delete().eq('id', data.id);
+        throw new Error(`Erro ao registrar consentimento: ${consentError.message}`);
+      }
     }
 
     await auditService.logActivity(
