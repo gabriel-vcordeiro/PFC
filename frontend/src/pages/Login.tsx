@@ -8,7 +8,6 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [requires2FA, setRequires2FA] = useState(false);
-  const [userId, setUserId] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -22,7 +21,6 @@ export default function Login() {
       const data = await login(email, password);
       if (data.requires_2fa) {
         setRequires2FA(true);
-        setUserId(data.user.id);
       } else {
         setUserID(data.user.id);
         navigate('/home');
@@ -40,7 +38,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const data = await verify2FA(userId, twoFactorCode);
+      const data = await verify2FA(twoFactorCode);
       setUserID(data.user.id);
       navigate('/home');
     } catch (err: any) {

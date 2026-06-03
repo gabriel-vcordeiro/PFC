@@ -15,4 +15,5 @@ export const env = {
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
   sendgridApiKey: process.env.SENDGRID_API_KEY || '',
   sessionCookieName: process.env.SESSION_COOKIE_NAME || 'pfc_session',
+  pending2FACookieName: process.env.PENDING_2FA_COOKIE_NAME || 'pfc_2fa_pending',
 };

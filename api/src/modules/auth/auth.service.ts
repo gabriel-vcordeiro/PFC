@@ -8,6 +8,7 @@ import { consentService } from '../consent/consent.service';
 import * as speakeasy from 'speakeasy';
 import * as qrcode from 'qrcode';
 import { User } from '../user/user.model';
+import { UserNeeding2FA, UserNotNeeding2FA } from './auth.types';
 
 const MAX_ATTEMPTS = 5;
 const LOCK_TIME = 15 * 60 * 1000; //15 min de bloqueio
@@ -84,7 +85,12 @@ export class AuthService {
 
     return data;
   }
-  async login(email: string, password: string, ipAddress?: string, userAgent?: string) {
+  async login(
+    email: string,
+    password: string,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<UserNotNeeding2FA | UserNeeding2FA> {
     email = email.toLowerCase();
     const { data: user, error } = await supabase
       .from('pfc_users')
@@ -251,7 +257,6 @@ export class AuthService {
       .single();
 
     if (!user || error) {
-      // Não revelar se o email existe ou não (segurança)
       await auditService.logActivity(
         null,
         AuditAction.PASSWORD_RESET_FAILED,

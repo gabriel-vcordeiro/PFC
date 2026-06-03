@@ -1,9 +1,10 @@
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 
-export function generateToken(payload: object) {
+export function generateToken(payload: object, options: jwt.SignOptions = {}) {
   return jwt.sign(payload, env.jwtSecret, {
-    expiresIn: '10m'
+    expiresIn: '10m',
+    ...options,
   });
 }
 

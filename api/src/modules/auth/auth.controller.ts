@@ -2,7 +2,14 @@ import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginSchema, RegisterSchema } from './auth.dto';
 import { User } from '../user/user.model';
-import { clearSessionCookie, setSessionCookie } from '../../utils/session';
+import {
+  clearPending2FACookie,
+  clearSessionCookie,
+  getPending2FAUserId,
+  setPending2FACookie,
+  setSessionCookie,
+} from '../../utils/session';
+import { isUserNotNeeding2FA } from './auth.guards';
 
 const authService = new AuthService();
 
@@ -53,8 +60,12 @@ export class AuthController {
       const userAgent = req.get('user-agent');
       const result = await authService.login(email, password, ipAddress, userAgent);
 
-      if (result.token) {
+      if (isUserNotNeeding2FA(result)) {
         setSessionCookie(res, result.token);
+        clearPending2FACookie(res);
+      }
+      else if (result.user?.id) {
+        setPending2FACookie(res, result.user.id);
       }
 
       res.json({
@@ -68,14 +79,18 @@ export class AuthController {
 
   async verify2FA(req: Request, res: Response) {
     try {
-      const { userId, token } = req.body;
+      const { token } = req.body;
+      const userId = getPending2FAUserId(req);
+
       if (!userId || !token) {
-        return res.status(400).json({ error: 'Dados inválidos.' });
+        return res.status(401).json({ error: 'Sessão temporária inválida ou expirada.' });
       }
+
       const result = await authService.verify2FA(userId, token);
 
       if (result.token) {
         setSessionCookie(res, result.token);
+        clearPending2FACookie(res);
       }
 
       res.json({
@@ -162,6 +177,7 @@ export class AuthController {
   }
 
   async logout(req: Request, res: Response) {
+    clearPending2FACookie(res);
     clearSessionCookie(res);
     return res.json({ message: 'Sessão encerrada.' });
   }

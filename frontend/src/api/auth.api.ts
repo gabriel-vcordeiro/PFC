@@ -43,9 +43,8 @@ export async function resetPassword(resetToken: string, newPassword: string) {
   return response.data;
 }
 
-export async function verify2FA(userId: string, token: string) {
+export async function verify2FA(token: string) {
   const response = await api.post('/auth/verify-2fa', {
-    userId,
     token,
   });
   return response.data;
