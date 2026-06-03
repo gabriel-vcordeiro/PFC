@@ -304,8 +304,6 @@ export class AuthService {
 
     return {
       message: 'Email enviado. Verifique sua caixa de entrada.',
-      // Apenas para desenvolvimento - remover em produção!
-      resetToken: resetToken,
       expiresAt,
     };
   }
