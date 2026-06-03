@@ -10,8 +10,9 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     const isLoginRoute = err.config?.url?.includes('/auth/login');
+    const isSessionBootstrapRoute = err.config?.url?.includes('/user/user');
 
-    if (err.response?.status === 401 && !isLoginRoute) {
+    if (err.response?.status === 401 && !isLoginRoute && !isSessionBootstrapRoute) {
       window.location.href = '/';
     }
 
