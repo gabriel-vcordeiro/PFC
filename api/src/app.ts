@@ -3,8 +3,9 @@ import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import routes from './routes/index'
 import { env } from './config/env';
+import cookieParser from 'cookie-parser';
 const app = express();
-
+app.use(cookieParser());
 app.use(cors({
   origin: env.frontendUrl,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],

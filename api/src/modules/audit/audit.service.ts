@@ -43,7 +43,6 @@ export class AuditService {
 
       if (error) {
         console.error('Erro ao registrar auditoria:', error);
-        // Não lançar erro para não interromper a operação principal
       }
     } catch (err) {
       console.error('Erro ao registrar auditoria:', err);

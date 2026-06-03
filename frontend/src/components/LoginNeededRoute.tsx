@@ -3,8 +3,13 @@ import { Navigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContextType';
 
 export default function LoginNeededRoute({ children }: any) {
-  const { token } = useContext(AuthContext);
-  if (!token) {
+  const { userID, isSessionLoading } = useContext(AuthContext);
+
+  if (isSessionLoading) {
+    return null;
+  }
+
+  if (!userID) {
     return <Navigate to="/" />;
   }
 

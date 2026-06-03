@@ -2,31 +2,16 @@ import axios from 'axios';
 import { env } from '../config/env';
 
 export const api = axios.create({
-  baseURL: env.apiUrl
-});
-
-// envia token
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
+  baseURL: env.apiUrl,
+  withCredentials: true,
 });
 
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    const isLoginRoute =
-      err.config?.url?.includes('/auth/login');
+    const isLoginRoute = err.config?.url?.includes('/auth/login');
 
-    if (
-      err.response?.status === 401 &&
-      !isLoginRoute
-    ) {
-      localStorage.removeItem('token');
+    if (err.response?.status === 401 && !isLoginRoute) {
       window.location.href = '/';
     }
 

@@ -25,7 +25,6 @@ export async function register(
     consentimento_finalidade,
     consentimento_versao,
   });
-
   return response.data;
 }
 
@@ -49,56 +48,35 @@ export async function verify2FA(userId: string, token: string) {
     userId,
     token,
   });
-
   return response.data;
 }
 
-export async function enable2FA(userId: string) {
-  const response = await api.post('/auth/enable-2fa', {
-    userId,
-  });
-
+export async function logout() {
+  const response = await api.post('/auth/logout');
   return response.data;
 }
 
-export async function disable2FA(userId: string) {
-  const response = await api.post('/auth/disable-2fa', {
-    userId,
-  });
-
+export async function enable2FA() {
+  const response = await api.post('/auth/enable-2fa');
   return response.data;
 }
 
-//Caminhos user
-export async function getUser(token: string) {
-  const response = await api.get('/user/user', {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+export async function disable2FA() {
+  const response = await api.post('/auth/disable-2fa');
   return response.data;
 }
 
-export async function exportUserData(token: string) {
-  const response = await api.get('/user/export-user-data', {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
+export async function getUser() {
+  const response = await api.get('/user/user');
   return response.data;
 }
 
-export async function deleteUserData(token: string) {
-  const response = await api.post(
-    '/user/delete-user-data',
-    {},
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+export async function exportUserData() {
+  const response = await api.get('/user/export-user-data');
+  return response.data;
+}
 
+export async function deleteUserData() {
+  const response = await api.post('/user/delete-user-data');
   return response.data;
 }

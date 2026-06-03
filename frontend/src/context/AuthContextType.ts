@@ -1,16 +1,14 @@
 import { createContext } from 'react';
 interface AuthContextType {
-  token: string | null;
-  setToken: (token: string | null) => void;
   userID: string | null;
   setUserID: (userID: string | null) => void;
-  logOut: () => void;
+  logOut: () => Promise<void>;
+  isSessionLoading: boolean;
 }
 
 export const AuthContext = createContext<AuthContextType>({
-  token: null,
-  setToken: () => {},
   userID: null,
   setUserID: () => {},
-  logOut: () => {}
+  logOut: async () => {},
+  isSessionLoading: true,
 });

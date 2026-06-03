@@ -7,7 +7,7 @@ import { emailService } from '../email/email.service';
 import { consentService } from '../consent/consent.service';
 import * as speakeasy from 'speakeasy';
 import * as qrcode from 'qrcode';
-import { User } from '../../models/user';
+import { User } from '../user/user.model';
 
 const MAX_ATTEMPTS = 5;
 const LOCK_TIME = 15 * 60 * 1000; //15 min de bloqueio

@@ -5,7 +5,7 @@ import { AuthContext } from '../context/AuthContextType';
 import type { User } from '../types/User';
 
 export default function Profile() {
-  const { logOut, token } = useContext(AuthContext);
+  const { logOut } = useContext(AuthContext);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -25,7 +25,7 @@ export default function Profile() {
       try {
         setLoading(true);
         setError('');
-        const data = await getUser(token!);
+        const data = await getUser();
         setUser(data.user);
       } catch (err: unknown) {
         setError(getErrorMessage(err));
@@ -34,7 +34,7 @@ export default function Profile() {
       }
     }
     loadProfile();
-  }, [token]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-white text-gray-900">

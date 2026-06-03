@@ -1,11 +1,6 @@
 import { Request, Response } from 'express';
 import { consentService } from './consent.service';
 import { RecordConsentSchema, GetConsentHistorySchema } from './consent.dto';
-import { verifyToken } from '../../utils/jwt';
-
-type DecodedAuthToken = {
-  userId?: string;
-};
 
 export class ConsentController {
   async recordConsent(req: Request, res: Response) {
@@ -16,22 +11,15 @@ export class ConsentController {
         return res.status(400).json({ error: 'Dados de consentimento inválidos.' });
       }
 
-      const authHeader = req.headers.authorization;
-      if (!authHeader?.startsWith('Bearer ')) {
+      const userId = (req as any).user?.userId;
+      if (!userId) {
         return res.status(401).json({ error: 'Token necessário.' });
-      }
-
-      const token = authHeader.split(' ')[1];
-      const validatedToken = verifyToken(token!) as DecodedAuthToken;
-
-      if (!validatedToken?.userId) {
-        return res.status(401).json({ error: 'Token inválido.' });
       }
 
       const { consentimento_aceito, consentimento_finalidade, consentimento_versao } = parsed.data;
 
       const consent = await consentService.recordConsent(
-        validatedToken.userId,
+        userId,
         consentimento_aceito,
         consentimento_finalidade,
         consentimento_versao
@@ -45,16 +33,9 @@ export class ConsentController {
 
   async getHistory(req: Request, res: Response) {
     try {
-      const authHeader = req.headers.authorization;
-      if (!authHeader?.startsWith('Bearer ')) {
+      const userId = (req as any).user?.userId;
+      if (!userId) {
         return res.status(401).json({ error: 'Token necessário.' });
-      }
-
-      const token = authHeader.split(' ')[1];
-      const validatedToken = verifyToken(token!) as DecodedAuthToken;
-
-      if (!validatedToken?.userId) {
-        return res.status(401).json({ error: 'Token inválido.' });
       }
 
       const parsed = GetConsentHistorySchema.safeParse(req.query);
@@ -63,7 +44,7 @@ export class ConsentController {
       }
 
       const { limit, offset } = parsed.data;
-      const history = await consentService.getConsentHistory(validatedToken.userId, limit, offset);
+      const history = await consentService.getConsentHistory(userId, limit, offset);
 
       res.json(history);
     } catch (err: any) {

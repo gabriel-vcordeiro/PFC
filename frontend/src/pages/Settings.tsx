@@ -12,7 +12,7 @@ export default function Settings() {
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const { userID, token, logOut } = useContext(AuthContext);
+  const { logOut } = useContext(AuthContext);
   const navigate = useNavigate();
 
   async function handleEnable2FA() {
@@ -20,7 +20,7 @@ export default function Settings() {
     setSuccess('');
 
     try {
-      const data = await enable2FA(userID!);
+      const data = await enable2FA();
       setQrCode(data.qrCodeUrl);
       setSecret(data.secret);
       setSuccess('2FA habilitado. Escaneie o QR code no seu app autenticador.');
@@ -34,7 +34,7 @@ export default function Settings() {
     setSuccess('');
 
     try {
-      await disable2FA(userID!);
+      await disable2FA();
       setQrCode('');
       setSecret('');
       setSuccess('2FA desabilitado.');
@@ -54,7 +54,7 @@ export default function Settings() {
     setIsDeleting(true);
 
     try {
-      await deleteUserData(token!);
+      await deleteUserData();
       setSuccess('Dados deletados. Você será redirecionado...');
       setTimeout(() => {
         logOut();
@@ -71,7 +71,7 @@ export default function Settings() {
     setIsExporting(true);
 
     try {
-      const data = await exportUserData(token!);
+      const data = await exportUserData();
       const blob = new Blob([JSON.stringify(data, null, 2)], {
         type: 'application/json;charset=utf-8',
       });

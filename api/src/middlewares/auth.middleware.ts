@@ -1,19 +1,17 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../utils/jwt';
+import { getSessionTokenFromRequest } from '../utils/session';
 
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
-  const authHeader = req.headers.authorization;
+  const token = getSessionTokenFromRequest(req);
 
-  if (!authHeader) {
+  if (!token) {
     return res.status(401).json({ error: 'Token não fornecido.' });
   }
 
-  const token = authHeader.split(' ')[1];
-
   try {
-    const decoded = verifyToken(token!);
+    const decoded = verifyToken(token);
 
-    // adiciona dados do usuário na request
     (req as any).user = decoded;
 
     next();

@@ -12,7 +12,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { setToken, setUserID } = useContext(AuthContext);
+  const { setUserID } = useContext(AuthContext);
 
   async function handleLogin(e: any) {
     e.preventDefault();
@@ -24,7 +24,6 @@ export default function Login() {
         setRequires2FA(true);
         setUserId(data.user.id);
       } else {
-        setToken(data.token);
         setUserID(data.user.id);
         navigate('/home');
       }
@@ -42,7 +41,6 @@ export default function Login() {
 
     try {
       const data = await verify2FA(userId, twoFactorCode);
-      setToken(data.token);
       setUserID(data.user.id);
       navigate('/home');
     } catch (err: any) {

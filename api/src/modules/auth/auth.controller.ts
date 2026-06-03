@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginSchema, RegisterSchema } from './auth.dto';
-import { User } from '../../models/user';
+import { User } from '../user/user.model';
+import { clearSessionCookie, setSessionCookie } from '../../utils/session';
 
 const authService = new AuthService();
 
@@ -51,7 +52,15 @@ export class AuthController {
       const ipAddress = req.ip;
       const userAgent = req.get('user-agent');
       const result = await authService.login(email, password, ipAddress, userAgent);
-      res.json(result);
+
+      if (result.token) {
+        setSessionCookie(res, result.token);
+      }
+
+      res.json({
+        requires_2fa: result.requires_2fa,
+        user: result.user,
+      });
     } catch (err: any) {
       res.status(401).json({ error: err.message });
     }
@@ -64,7 +73,14 @@ export class AuthController {
         return res.status(400).json({ error: 'Dados inválidos.' });
       }
       const result = await authService.verify2FA(userId, token);
-      res.json(result);
+
+      if (result.token) {
+        setSessionCookie(res, result.token);
+      }
+
+      res.json({
+        user: result.user,
+      });
     } catch (err: any) {
       res.status(401).json({ error: err.message });
     }
@@ -72,7 +88,7 @@ export class AuthController {
 
   async enable2FA(req: Request, res: Response) {
     try {
-      const { userId } = req.body;
+      const userId = (req as any).user?.userId;
       if (!userId) {
         return res.status(400).json({ error: 'User ID necessário.' });
       }
@@ -85,7 +101,7 @@ export class AuthController {
 
   async disable2FA(req: Request, res: Response) {
     try {
-      const { userId } = req.body;
+      const userId = (req as any).user?.userId;
       if (!userId) {
         return res.status(400).json({ error: 'User ID necessário.' });
       }
@@ -143,6 +159,11 @@ export class AuthController {
     } catch (err: any) {
       res.status(400).json({ error: err.message });
     }
+  }
+
+  async logout(req: Request, res: Response) {
+    clearSessionCookie(res);
+    return res.json({ message: 'Sessão encerrada.' });
   }
 }
 

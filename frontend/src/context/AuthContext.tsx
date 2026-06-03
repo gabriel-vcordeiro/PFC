@@ -1,42 +1,39 @@
-import { useState } from "react";
-import { isTokenExpired } from "../utils/token";
-import { AuthContext } from "./AuthContextType";
+import { useEffect, useState } from 'react';
+import { getUser, logout } from '../api/auth.api';
+import { AuthContext } from './AuthContextType';
 export function AuthProvider({ children }: any) {
-  const [token, setTokenState] = useState<string | null>(() => {
-    const storedToken = localStorage.getItem("token");
-    return storedToken && !isTokenExpired(storedToken) ? storedToken : null;
-  });
-
   const [userID, setUserIDState] = useState<string | null>(() => {
-    const storedUserID = localStorage.getItem("userID");
-    return storedUserID ? storedUserID : null;
+    return null;
   });
+  const [isSessionLoading, setIsSessionLoading] = useState(true);
 
-  function logOut() {
-    setTokenState("");
-    setUserIDState("");
-  }
+  useEffect(() => {
+    async function loadSession() {
+      try {
+        const session = await getUser();
 
-  function setToken(token: string | null) {
-    if (token) {
-      localStorage.setItem("token", token);
-    } else {
-      localStorage.removeItem("token");
+        setUserIDState(session?.user?.id ?? null);
+      } finally {
+        setIsSessionLoading(false);
+      }
     }
-    setTokenState(token);
+
+    loadSession();
+  }, []);
+
+  async function logOut() {
+    try {
+      await logout();
+    } finally {
+      setUserIDState(null);
+    }
   }
+
   function setUserID(userID: string | null) {
-    if (userID) {
-      localStorage.setItem("userID", userID);
-    } else {
-      localStorage.removeItem("userID");
-      logOut();
-    }
-    setUserIDState(userID)
+    setUserIDState(userID);
   }
   return (
-    <AuthContext.Provider
-      value={{ token, setToken, userID, setUserID: setUserID, logOut }}>
+    <AuthContext.Provider value={{ userID, setUserID: setUserID, logOut, isSessionLoading }}>
       {children}
     </AuthContext.Provider>
   );
