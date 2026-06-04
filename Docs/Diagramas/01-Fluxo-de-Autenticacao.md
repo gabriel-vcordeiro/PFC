@@ -8,45 +8,31 @@ Este documento descreve os fluxos de autenticação implementados no sistema PFC
 
 Endpoint: `POST /auth/register`
 
+O usuário preenche o formulário com nome de usuário, e-mail, senha e aceite do consentimento LGPD. O frontend envia os dados via HTTPS para a API, que valida a entrada com Zod antes de qualquer operação.
+
+Se os dados forem inválidos, a API retorna `400` imediatamente. Se o e-mail já existir, o registro é rejeitado e o evento `REGISTER_FAILED` é auditado. Em caso de sucesso, a senha é convertida em hash bcrypt, o usuário é inserido junto com o registro de consentimento, e o evento `REGISTER_SUCCESS` é auditado com IP e User-Agent.
+
 ```mermaid
 sequenceDiagram
-    autonumber
     actor U as Usuário
-    participant F as Frontend (React)
-    participant API as API (Express)
-    participant V as Validador (Zod)
-    participant H as bcrypt
-    participant DB as Supabase (PostgreSQL)
-    participant AUD as AuditService
+    participant API as API
+    participant DB as Supabase
 
-    U->>F: Preenche formulário (username, email, senha, consentimento)
-    F->>API: POST /auth/register (HTTPS)
-    API->>V: RegisterSchema.safeParse(body)
-    alt Dados inválidos
-        V-->>API: erro
-        API-->>F: 400 "Dados inválidos."
-    else Dados válidos
-        API->>H: hashPassword(senha, SALT_ROUNDS)
-        H-->>API: password_hash
-        API->>DB: INSERT pfc_users
-        alt Email duplicado
-            DB-->>API: erro de duplicidade
-            API->>AUD: REGISTER_FAILED
-            API-->>F: 400 "Email já cadastrado."
-        else Sucesso
-            DB-->>API: user
-            API->>DB: INSERT pfc_consents (LGPD)
-            API->>AUD: REGISTER_SUCCESS (ip, user-agent)
-            API-->>F: 201 user
-        end
+    U->>API: POST /auth/register (email, senha, consentimento)
+    API->>API: Valida com Zod + hash bcrypt
+    alt Dados inválidos ou email duplicado
+        API-->>U: 400 erro
+    else Sucesso
+        API->>DB: INSERT pfc_users + pfc_consents
+        API-->>U: 201 usuário criado
     end
 ```
 
 **Pontos de segurança aplicados:**
 - Validação de entrada com **Zod** (`RegisterSchema`).
 - Senha armazenada como hash **bcrypt** (`BCRYPT_SALT_ROUNDS` configurável).
-- Normalização do email para minúsculas (evita contas duplicadas).
-- Registro de **consentimento LGPD** atômico (rollback do usuário caso falhe).
+- Normalização do e-mail para minúsculas (evita contas duplicadas).
+- Registro de **consentimento LGPD** atômico — rollback do usuário caso falhe.
 - Auditoria de tentativas (sucesso e falha) com IP e User-Agent.
 
 ---
@@ -55,57 +41,35 @@ sequenceDiagram
 
 Endpoints: `POST /auth/login` e `POST /auth/verify-2fa`
 
+O usuário informa e-mail e senha. A API busca o usuário no banco e verifica se a conta está bloqueada por tentativas excessivas. Em seguida, a senha é comparada com o hash bcrypt armazenado. Cinco tentativas incorretas consecutivas resultam em bloqueio de 15 minutos.
+
+Se a senha estiver correta e o 2FA estiver habilitado, a API solicita o código TOTP. O código é validado pelo `speakeasy` com janela de tolerância de 2 períodos. Apenas após essa verificação o JWT é emitido com validade de 10 minutos.
+
 ```mermaid
 sequenceDiagram
-    autonumber
     actor U as Usuário
-    participant F as Frontend
     participant API as API
     participant DB as Supabase
-    participant BC as bcrypt
-    participant SP as speakeasy (TOTP)
-    participant JWT as JWT
-    participant AUD as AuditService
 
-    U->>F: email + senha
-    F->>API: POST /auth/login
-    API->>DB: SELECT pfc_users WHERE email
-    alt Usuário não existe
-        API->>AUD: LOGIN_FAILED
-        API-->>F: 401 "Credenciais inválidas."
-    else Conta bloqueada (locked_until > now)
-        API->>AUD: ACCOUNT_LOCKED
-        API-->>F: 401 "Conta bloqueada temporariamente."
-    else
-        API->>BC: comparePassword(senha, hash)
-        alt Senha incorreta
-            API->>DB: failed_attempts++ (ou locked_until = now+15min se >=5)
-            API->>AUD: LOGIN_FAILED
-            API-->>F: 401 "Credenciais inválidas."
-        else Senha correta
-            API->>DB: failed_attempts=0
-            API->>AUD: LOGIN_SUCCESS
-            alt 2FA habilitado
-                API-->>F: { requires_2fa: true, user }
-                U->>F: código TOTP (6 dígitos)
-                F->>API: POST /auth/verify-2fa
-                API->>SP: totp.verify(secret_2fa, token, window=2)
-                alt Código inválido
-                    API-->>F: 401 "Código 2FA inválido."
-                else Código válido
-                    API->>JWT: generateToken({ userId }) exp=10m
-                    API-->>F: { token, user }
-                end
-            else 2FA desabilitado
-                API->>JWT: generateToken({ userId })
-                API-->>F: { token, user }
-            end
+    U->>API: POST /auth/login (email + senha)
+    API->>DB: Busca usuário
+    alt Conta bloqueada ou senha errada
+        API-->>U: 401 erro genérico
+    else Senha correta, 2FA ativo
+        API-->>U: { requires_2fa: true }
+        U->>API: POST /auth/verify-2fa (código TOTP)
+        alt Código inválido
+            API-->>U: 401
+        else Código válido
+            API-->>U: JWT (10 min)
         end
+    else Senha correta, sem 2FA
+        API-->>U: JWT (10 min)
     end
 ```
 
 **Pontos de segurança aplicados:**
-- Bloqueio de conta após **5 tentativas falhas** por **15 minutos** (`MAX_ATTEMPTS=5`, `LOCK_TIME=15min`).
+- Bloqueio de conta após **5 tentativas falhas** por **15 minutos**.
 - Mensagens de erro genéricas (não revelam se o e-mail existe).
 - TOTP com `speakeasy` (RFC 6238), janela de tolerância de 2 períodos.
 - JWT de curta duração (**10 minutos**), assinado com `JWT_SECRET`.
@@ -117,84 +81,26 @@ sequenceDiagram
 
 Endpoints: `POST /auth/request-password-reset`, `POST /auth/validate-reset-token`, `POST /auth/reset-password`
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor U as Usuário
-    participant F as Frontend
-    participant API as API
-    participant DB as Supabase
-    participant CR as crypto.randomBytes
-    participant EM as EmailService (SendGrid)
-    participant BC as bcrypt
-    participant AUD as AuditService
+O usuário solicita a redefinição informando o e-mail. Se o e-mail existir, a API gera um token criptográfico de 256 bits com validade de 1 hora e o envia por e-mail via SendGrid. A resposta é sempre genérica, independentemente de o e-mail existir ou não.
 
-    U->>F: Solicita "Esqueci minha senha"
-    F->>API: POST /auth/request-password-reset (email)
-    API->>DB: SELECT pfc_users WHERE email
-    alt Email não existe
-        API->>AUD: PASSWORD_RESET_FAILED
-        API-->>F: Mensagem genérica (não revela existência)
-    else Email existe
-        API->>CR: randomBytes(32).toString('hex')
-        CR-->>API: resetToken (256 bits)
-        API->>DB: UPDATE reset_token, reset_token_expires_at (now+1h)
-        API->>AUD: PASSWORD_RESET_REQUESTED
-        API->>EM: sendPasswordResetEmail(token, expiresAt)
-        EM-->>U: Email com link contendo token
-    end
-
-    U->>F: Acessa link de reset
-    F->>API: POST /auth/validate-reset-token
-    API->>DB: SELECT WHERE reset_token = ?
-    alt Token inválido ou expirado
-        API->>AUD: PASSWORD_RESET_TOKEN_EXPIRED
-        API-->>F: 400 "Token inválido/expirado."
-    else Token válido
-        API-->>F: { valid: true, email }
-        U->>F: Define nova senha
-        F->>API: POST /auth/reset-password
-        API->>BC: hashPassword(newPassword)
-        API->>DB: UPDATE password, reset_token=null, reset_token_expires_at=null
-        API->>AUD: PASSWORD_RESET_COMPLETED
-        API->>EM: sendPasswordChangedEmail()
-        API-->>F: 200 "Senha resetada com sucesso."
-    end
-```
+O usuário acessa o link recebido, que valida o token. Se válido, o usuário define uma nova senha, que é armazenada como hash bcrypt. O token é imediatamente invalidado após o uso e um e-mail de confirmação é enviado.
 
 **Pontos de segurança aplicados:**
-- Token de reset gerado com `crypto.randomBytes(32)` (**256 bits de entropia**).
-- Validade do token: **1 hora** (`RESET_TOKEN_EXPIRY`).
-- Token invalidado após uso (campos `reset_token` e `reset_token_expires_at` zerados).
-- Mensagem genérica quando o email não existe (evita user enumeration).
-- Notificação por e-mail ao concluir a troca (detecção de uso indevido).
+- Token gerado com `crypto.randomBytes(32)` (**256 bits de entropia**).
+- Validade do token: **1 hora**.
+- Token invalidado após uso.
+- Mensagem genérica quando o e-mail não existe (evita user enumeration).
+- Notificação por e-mail ao concluir a troca.
 
 ---
 
 ## 4. Acesso a Rotas Protegidas
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor U as Usuário autenticado
-    participant F as Frontend
-    participant MW as authMiddleware
-    participant JWT as JWT
-    participant CTRL as Controller
+Toda rota protegida passa pelo `authMiddleware`, que extrai o token do header `Authorization: Bearer <token>` e o valida com `jsonwebtoken`. Se o token estiver ausente, expirado ou com assinatura inválida, a requisição é rejeitada com `401` antes de chegar ao controller.
 
-    U->>F: Ação que exige autenticação
-    F->>MW: Request com header "Authorization: Bearer <token>"
-    alt Sem header
-        MW-->>F: 401 "Token não fornecido."
-    else
-        MW->>JWT: verifyToken(token)
-        alt Token inválido/expirado
-            JWT-->>MW: erro
-            MW-->>F: 401 "Token inválido ou expirado."
-        else Token válido
-            JWT-->>MW: { userId }
-            MW->>CTRL: req.user = { userId }; next()
-            CTRL-->>F: 200 (recurso)
-        end
-    end
-```
+**Fluxo resumido:**
+
+1. Frontend envia requisição com `Authorization: Bearer <token>`.
+2. `authMiddleware` chama `verifyToken(token)`.
+3. Se válido: `req.user = { userId }` e a requisição segue.
+4. Se inválido ou ausente: `401` retornado imediatamente.
