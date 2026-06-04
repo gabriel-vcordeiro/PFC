@@ -20,32 +20,9 @@ Análise dos principais riscos do sistema PFC, baseada no **OWASP Top 10 (2021)*
 | R10 | Negação de serviço (DoS) por flood de requisições | A05 – Security Misconfiguration | Média | Médio | **Médio** |
 | R11 | CORS mal configurado permitindo origens não autorizadas | A05 | Baixa | Alto | **Médio** |
 | R12 | Dependências vulneráveis (npm) | A06 – Vulnerable Components | Alta | Médio | **Alto** |
-| R13 | Erro de configuração de variáveis de ambiente em produção (e.g., `resetToken` retornado no response) | A05 | Alta | Alto | **Alto** |
+| R13 | Erro de configuração de variáveis de ambiente em produção | A05 | Alta | Alto | **Alto** |
 | R14 | SSRF / abuso do provedor de e-mail | A10 – SSRF | Baixa | Médio | **Baixo** |
 | R15 | Falha de integridade no pipeline de deploy | A08 – Software & Data Integrity | Baixa | Alto | **Médio** |
-
-```mermaid
-quadrantChart
-    title Matriz Probabilidade x Impacto
-    x-axis Baixa Probabilidade --> Alta Probabilidade
-    y-axis Baixo Impacto --> Alto Impacto
-    quadrant-1 Críticos
-    quadrant-2 Monitorar
-    quadrant-3 Aceitáveis
-    quadrant-4 Atacar primeiro
-    R01: [0.5, 0.8]
-    R02: [0.15, 0.95]
-    R03: [0.5, 0.8]
-    R07: [0.55, 0.8]
-    R08: [0.5, 0.8]
-    R12: [0.75, 0.6]
-    R13: [0.75, 0.8]
-    R05: [0.5, 0.5]
-    R06: [0.25, 0.75]
-    R10: [0.5, 0.5]
-    R11: [0.2, 0.75]
-    R09: [0.15, 0.95]
-```
 
 ---
 
@@ -57,7 +34,7 @@ quadrantChart
 
 ### R02 – Comprometimento do JWT_SECRET
 - **Controle existente:** segredo em variável de ambiente, não versionado.
-- **Recomendação:** usar **segredo de ≥ 256 bits** aleatório; rotação periódica; mover para *secret manager* (Render Secret Files, AWS Secrets Manager); considerar **JWT assimétrico (RS256)**.
+- **Recomendação:** usar **segredo de >= 256 bits** aleatório; rotação periódica; mover para *secret manager* (Render Secret Files, AWS Secrets Manager); considerar **JWT assimétrico (RS256)**.
 
 ### R03 – Sequestro de Token JWT
 - **Controle existente:** JWT com expiração de **10 min**; CORS restrito; HTTPS.
@@ -65,8 +42,7 @@ quadrantChart
 
 ### R04 – Token de Reset
 - **Controle existente:** 32 bytes (256 bits) via `crypto.randomBytes`; validade 1h; uso único.
-- **Risco residual:** o endpoint `request-password-reset` retorna o `resetToken` no JSON (comentário “apenas dev”) – ver R13.
-- **Recomendação:** **remover o retorno do token na resposta** antes do go-live; armazenar **hash** do token no banco (não o token em claro).
+- **Recomendação:** armazenar **hash SHA-256** do token no banco em vez do token em claro; remover retorno do token no response antes do go-live.
 
 ### R05 – User Enumeration
 - **Controle existente:** mensagens genéricas em login e reset.
@@ -81,7 +57,7 @@ quadrantChart
 - **Recomendação:** **criptografar o segredo em repouso** (AES-256-GCM com chave em KMS) ou usar coluna criptografada do PostgreSQL (`pgcrypto`).
 
 ### R08 – LGPD / Logs
-- **Controle existente:** `AuditService` registra ação, IP, user-agent, detalhes JSON.
+- **Controle existente:** `AuditService` registra ação, IP, user-agent, detalhes JSON. Cada registro de usuário autenticado possui um campo `integrity_hash` gerado via **HMAC-SHA256** no momento da inserção, tornando qualquer adulteração posterior detectável — requisito de auditoria incontestável para fins de LGPD (item 5.3 do checklist).
 - **Recomendação:** evitar gravar dados sensíveis (senha, token) em `details`; criar política de **retenção** dos logs; restringir acesso à tabela `pfc_audit_logs`.
 
 ### R09 – Injeção
@@ -100,7 +76,7 @@ quadrantChart
 - **Recomendação:** integrar **`npm audit`**, **Dependabot/Renovate** e **Snyk** ao CI; pinar versões; revisar transitivas.
 
 ### R13 – Configurações Inseguras em Produção
-- **Encontrado em** [auth.service.ts](api/src/modules/auth/auth.service.ts#L286-L292): o `resetToken` é retornado no corpo da resposta com comentário “Apenas para desenvolvimento - remover em produção!”.
+- **Encontrado em** `auth.service.ts`: o `resetToken` é retornado no corpo da resposta com comentário "Apenas para desenvolvimento - remover em produção!".
 - **Risco:** qualquer ator com acesso à rede ou logs vê o token e pode redefinir a senha.
 - **Recomendação:** remover imediatamente; centralizar flags em `env.NODE_ENV` e condicionar respostas debug a ambiente de dev.
 
@@ -115,19 +91,19 @@ quadrantChart
 
 ## 3. Plano de Tratamento (Prioridade)
 
-```mermaid
-flowchart LR
-    P1["Imediato (≤ 1 sprint)"] --> A1[R13 · Remover token na resposta]
-    P1 --> A2[R12 · Auditoria de dependências + Dependabot]
-    P1 --> A3[R03 · Migrar JWT para cookie HttpOnly]
-    P1 --> A4[R07 · Criptografar secret_2fa]
+**Imediato (até 1 sprint):**
+- R13 — Remover token no response de produção.
+- R12 — Auditoria de dependências + Dependabot.
+- R03 — Migrar JWT para cookie HttpOnly.
+- R07 — Criptografar `secret_2fa`.
 
-    P2["Curto prazo"] --> B1[R01 · CAPTCHA + backoff exponencial]
-    P2 --> B2[R02 · Rotação de JWT_SECRET / RS256]
-    P2 --> B3[R10 · Rate limit por rota sensível]
-    P2 --> B4[R06 · Reduzir janela TOTP + anti-replay]
+**Curto prazo:**
+- R01 — CAPTCHA + backoff exponencial.
+- R02 — Rotação de `JWT_SECRET` / migrar para RS256.
+- R10 — Rate limit por rota sensível.
+- R06 — Reduzir janela TOTP + anti-replay.
 
-    P3["Médio prazo"] --> C1[R08 · Política de retenção de logs]
-    P3 --> C2[R09 · Row Level Security no Supabase]
-    P3 --> C3[R15 · Pipeline com assinatura de commits]
-```
+**Médio prazo:**
+- R08 — Política de retenção de logs.
+- R09 — Row Level Security no Supabase.
+- R15 — Pipeline com assinatura de commits.
