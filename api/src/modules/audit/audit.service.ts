@@ -1,4 +1,5 @@
 import { supabase } from '../../db/supabase/client';
+import { hmacAuditLog } from '../../utils/hash';
 
 export enum AuditAction {
   PASSWORD_RESET_REQUESTED = 'password_reset_requested',
@@ -28,18 +29,20 @@ export class AuditService {
     userAgent?: string
   ) {
     try {
+      const created_at = new Date().toISOString();
+      const payload = {
+        user_id: userId,
+        action,
+        details: JSON.stringify(details),
+        ip_address: ipAddress,
+        user_agent: userAgent,
+        created_at
+      };
+      const integrity_hash = userId ? hmacAuditLog(payload) : null;
+
       const { error } = await supabase
         .from('pfc_audit_logs')
-        .insert([
-          {
-            user_id: userId,
-            action,
-            details: JSON.stringify(details),
-            ip_address: ipAddress,
-            user_agent: userAgent,
-            created_at: new Date().toISOString()
-          }
-        ]);
+        .insert([{ ...payload, integrity_hash }]);
 
       if (error) {
         console.error('Erro ao registrar auditoria:', error);
